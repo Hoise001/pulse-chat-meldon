@@ -1,0 +1,235 @@
+import { getHomeTRPCClient } from '@/lib/trpc';
+import { TYPING_MS, type TJoinedDmChannel, type TJoinedDmMessage } from '@pulse/shared';
+import { setCurrentVoiceChannelId, setCurrentVoiceServerId } from '../server/channels/actions';
+import { playSound } from '../server/sounds/actions';
+import { SoundType } from '../server/types';
+import { ownUserIdSelector } from '../server/users/selectors';
+import { addUserToVoiceChannel } from '../server/voice/actions';
+import { store } from '../store';
+import { dmsSliceActions } from './slice';
+
+export const setDmChannels = (channels: TJoinedDmChannel[]) =>
+  store.dispatch(dmsSliceActions.setChannels(channels));
+
+export const addOrUpdateDmChannel = (channel: TJoinedDmChannel) =>
+  store.dispatch(dmsSliceActions.addOrUpdateChannel(channel));
+
+export const setSelectedDmChannelId = (channelId: number | undefined) =>
+  store.dispatch(dmsSliceActions.setSelectedChannelId(channelId));
+
+export const addDmMessages = (
+  dmChannelId: number,
+  messages: TJoinedDmMessage[],
+  opts: { prepend?: boolean } = {},
+  isSubscription = false
+) => {
+  if (isSubscription && messages.length > 0) {
+    const state = store.getState();
+    const ownUserId = ownUserIdSelector(state);
+    if (messages[0].userId !== ownUserId) {
+      playSound(SoundType.MESSAGE_RECEIVED);
+
+      // Increment unread count if this channel is not currently selected
+      const selectedId = state.dms.selectedChannelId;
+      if (selectedId !== dmChannelId) {
+        store.dispatch(dmsSliceActions.incrementChannelUnread(dmChannelId));
+      }
+    }
+  }
+  store.dispatch(dmsSliceActions.addMessages({ dmChannelId, messages, opts }));
+};
+
+export const updateDmMessage = (message: TJoinedDmMessage) => {
+  store.dispatch(dmsSliceActions.updateMessage(message));
+  store.dispatch(
+    dmsSliceActions.updateChannelLastMessage({
+      dmChannelId: message.dmChannelId,
+      lastMessage: message
+    })
+  );
+};
+
+export const deleteDmMessage = (dmChannelId: number, dmMessageId: number) => {
+  store.dispatch(dmsSliceActions.deleteMessage({ dmChannelId, dmMessageId }));
+};
+
+export const setDmsLoading = (loading: boolean) =>
+  store.dispatch(dmsSliceActions.setLoading(loading));
+
+export const resetDmsState = () =>
+  store.dispatch(dmsSliceActions.resetState());
+
+export const fetchDmChannels = async () => {
+  const trpc = getHomeTRPCClient();
+  setDmsLoading(true);
+  try {
+    const channels = await trpc.dms.getChannels.query();
+    setDmChannels(channels);
+  } catch (err) {
+    console.error('Failed to fetch DM channels:', err);
+  } finally {
+    setDmsLoading(false);
+  }
+};
+
+export const fetchActiveDmCalls = async () => {
+  const trpc = getHomeTRPCClient();
+  try {
+    const activeCalls = await trpc.dms.getActiveCalls.query();
+    for (const call of activeCalls) {
+      store.dispatch(
+        dmsSliceActions.dmCallStarted({
+          dmChannelId: call.dmChannelId,
+          startedBy: call.users[0]?.userId ?? 0
+        })
+      );
+      for (const user of call.users) {
+        store.dispatch(
+          dmsSliceActions.dmCallUserJoined({
+            dmChannelId: call.dmChannelId,
+            userId: user.userId,
+            state: user.state
+          })
+        );
+        addUserToVoiceChannel(user.userId, call.dmChannelId, user.state);
+      }
+    }
+  } catch (err) {
+    console.error('Failed to fetch active DM calls:', err);
+  }
+};
+
+export const getOrCreateDmChannel = async (
+  userId: number
+): Promise<TJoinedDmChannel | undefined> => {
+  const trpc = getHomeTRPCClient();
+  try {
+    const channel = await trpc.dms.getOrCreateChannel.mutate({ userId });
+    addOrUpdateDmChannel(channel);
+    return channel;
+  } catch (err) {
+    console.error('Failed to get or create DM channel:', err);
+  }
+};
+
+export const fetchDmMessages = async (
+  dmChannelId: number,
+  cursor?: number | null
+) => {
+  const trpc = getHomeTRPCClient();
+  try {
+    const result = await trpc.dms.getMessages.query({ dmChannelId, cursor });
+    addDmMessages(dmChannelId, result.messages, { prepend: !!cursor });
+
+    // Clear unread badge when fetching the first page (user opened the channel)
+    if (!cursor) {
+      store.dispatch(dmsSliceActions.clearChannelUnread(dmChannelId));
+    }
+
+    return result.nextCursor;
+  } catch (err) {
+    console.error('Failed to fetch DM messages:', err);
+  }
+};
+
+export const sendDmMessage = async (
+  dmChannelId: number,
+  content: string,
+  files?: string[],
+  replyToId?: number
+) => {
+  const trpc = getHomeTRPCClient();
+  await trpc.dms.sendMessage.mutate({ dmChannelId, content, files, replyToId });
+};
+
+export const editDmMessage = async (messageId: number, content: string) => {
+  const trpc = getHomeTRPCClient();
+  await trpc.dms.editMessage.mutate({ messageId, content });
+};
+
+export const deleteDmMessageAction = async (messageId: number) => {
+  const trpc = getHomeTRPCClient();
+  await trpc.dms.deleteMessage.mutate({ messageId });
+};
+
+export const joinDmVoiceCall = async (dmChannelId: number) => {
+  const state = store.getState();
+  const currentVoiceChannelId = state.server.currentVoiceChannelId;
+  const ownDmCallChannelId = state.dms.ownDmCallChannelId;
+
+  // Already in this DM call
+  if (ownDmCallChannelId === dmChannelId) return undefined;
+
+  // Leave current voice if in one (server or DM)
+  if (currentVoiceChannelId) {
+    if (ownDmCallChannelId) {
+      await leaveDmVoiceCall();
+    } else {
+      // Dynamically import to avoid circular dependency with voice/actions
+      const { leaveVoice } = await import('../server/voice/actions');
+      await leaveVoice();
+    }
+  }
+
+  const trpc = getHomeTRPCClient();
+  const result = await trpc.dms.voiceJoin.mutate({
+    dmChannelId,
+    state: { micMuted: false, soundMuted: false }
+  });
+  store.dispatch(dmsSliceActions.setOwnDmCallChannelId(dmChannelId));
+  // Also set the server voice channel ID so useVoiceEvents subscribes
+  setCurrentVoiceChannelId(dmChannelId);
+  return result;
+};
+
+export const leaveDmVoiceCall = async () => {
+  const trpc = getHomeTRPCClient();
+  await trpc.dms.voiceLeave.mutate();
+  store.dispatch(dmsSliceActions.setOwnDmCallChannelId(undefined));
+  setCurrentVoiceChannelId(undefined);
+  setCurrentVoiceServerId(undefined);
+};
+
+export const dmCallStarted = (dmChannelId: number, startedBy: number) =>
+  store.dispatch(dmsSliceActions.dmCallStarted({ dmChannelId, startedBy }));
+
+export const dmCallEnded = (dmChannelId: number) =>
+  store.dispatch(dmsSliceActions.dmCallEnded({ dmChannelId }));
+
+export const dmCallUserJoined = (
+  dmChannelId: number,
+  userId: number,
+  state: import('@pulse/shared').TVoiceUserState
+) =>
+  store.dispatch(
+    dmsSliceActions.dmCallUserJoined({ dmChannelId, userId, state })
+  );
+
+export const dmCallUserLeft = (dmChannelId: number, userId: number) =>
+  store.dispatch(dmsSliceActions.dmCallUserLeft({ dmChannelId, userId }));
+
+// Typing indicators
+
+const dmTypingTimeouts: Record<string, ReturnType<typeof setTimeout>> = {};
+
+const getDmTypingKey = (dmChannelId: number, userId: number) =>
+  `${dmChannelId}:${userId}`;
+
+export const addDmTypingUser = (dmChannelId: number, userId: number) => {
+  store.dispatch(dmsSliceActions.addDmTypingUser({ dmChannelId, userId }));
+
+  const key = getDmTypingKey(dmChannelId, userId);
+
+  if (dmTypingTimeouts[key]) {
+    clearTimeout(dmTypingTimeouts[key]);
+  }
+
+  dmTypingTimeouts[key] = setTimeout(() => {
+    removeDmTypingUser(dmChannelId, userId);
+    delete dmTypingTimeouts[key];
+  }, TYPING_MS + 500);
+};
+
+export const removeDmTypingUser = (dmChannelId: number, userId: number) => {
+  store.dispatch(dmsSliceActions.removeDmTypingUser({ dmChannelId, userId }));
+};

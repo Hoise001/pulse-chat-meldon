@@ -1,0 +1,26 @@
+{
+  "name": "pulse",
+  "version": "0.0.1",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "trustedDependencies": [
+    "electron",
+    "fs-xattr",
+    "macos-alias",
+    "mediasoup"
+  ],
+  "scripts": {
+    "format": "bun run --filter '*' format",
+    "check-types": "bun run --filter '*' check-types",
+    "lint": "bun run --filter '*' lint",
+    "knip": "knip",
+    "knip:production": "knip --production",
+    "magic": "bun run format && bun run check-types && bun run lint"
+  },
+  "devDependencies": {
+    "knip": "^5.80.0"
+  }
+}

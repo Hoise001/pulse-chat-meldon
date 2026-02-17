@@ -1,0 +1,92 @@
+import { afterAll, afterEach, beforeAll, beforeEach, mock } from 'bun:test';
+import { sql } from 'drizzle-orm';
+import fs from 'node:fs/promises';
+import { DATA_PATH } from '../helpers/paths';
+import { createHttpServer } from '../http';
+import { loadMediasoup } from '../utils/mediasoup';
+import { client, dbProxy, getTestDb } from './mock-db';
+import { seedDatabase } from './seed';
+
+/**
+ * Global test setup - truncates all tables and re-seeds before each test.
+ * This ensures tests don't interfere with each other.
+ */
+
+const DISABLE_CONSOLE = true;
+const CLEANUP_AFTER_FINISH = true;
+
+if (DISABLE_CONSOLE) {
+  const noop = () => {};
+
+  global.console.log = noop;
+  global.console.info = noop;
+  global.console.warn = noop;
+  global.console.debug = noop;
+
+  mock.module('../logger', () => ({
+    logger: {
+      info: noop,
+      warn: noop,
+      error: noop,
+      debug: noop,
+      trace: noop,
+      fatal: noop
+    }
+  }));
+}
+
+let testsBaseUrl: string;
+
+beforeAll(async () => {
+  await createHttpServer(9999);
+  await loadMediasoup();
+
+  testsBaseUrl = 'http://localhost:9999';
+});
+
+beforeEach(async () => {
+  const tdb = getTestDb();
+
+  // Truncate all tables in reverse dependency order
+  await tdb.execute(sql`TRUNCATE TABLE
+    plugin_data,
+    channel_read_states,
+    channel_user_permissions,
+    channel_role_permissions,
+    message_reactions,
+    message_files,
+    activity_log,
+    logins,
+    user_roles,
+    messages,
+    emojis,
+    invites,
+    files,
+    users,
+    role_permissions,
+    roles,
+    channels,
+    categories,
+    settings
+    RESTART IDENTITY CASCADE`);
+
+  await seedDatabase(tdb);
+});
+
+afterEach(() => {
+  // No cleanup needed - tables are truncated in beforeEach
+});
+
+afterAll(async () => {
+  if (CLEANUP_AFTER_FINISH) {
+    try {
+      await fs.rm(DATA_PATH, { recursive: true });
+    } catch {
+      // ignore
+    }
+  }
+
+  await client.end();
+});
+
+export { dbProxy as tdb, getTestDb, testsBaseUrl };
