@@ -99,6 +99,7 @@ export type TServerInfo = Pick<
   id?: number;
   logo: TFile | null;
   version: string;
+  registrationDisabled?: boolean;
   enabledAuthProviders?: string[];
   supabaseUrl: string;
   supabaseAnonKey: string;
@@ -138,6 +139,8 @@ export type TChannelUserPermissionsMap = Record<
 >;
 
 export type TReadStateMap = Record<number, number>;
+
+export type TLastReadMessageIdMap = Record<number, number | null>;
 
 export type TMentionStateMap = Record<number, number>;
 
@@ -224,6 +227,7 @@ export type TRemoteServerSummary = {
   memberCount: number;
   instanceDomain: string;
   instanceName: string;
+  hasPassword?: boolean;
 };
 
 export enum AutomodRuleType {
