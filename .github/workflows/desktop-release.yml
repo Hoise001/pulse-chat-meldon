@@ -102,8 +102,6 @@ jobs:
           path: |
             apps/desktop/out/make/**/*.dmg
             apps/desktop/out/make/**/*.zip
-            apps/desktop/out/make/**/*.exe
-            apps/desktop/out/make/**/*.nupkg
             apps/desktop/out/make/**/*.deb
             apps/desktop/out/make/**/*.rpm
           if-no-files-found: error
@@ -145,7 +143,6 @@ jobs:
           files: |
             artifacts/**/*.dmg
             artifacts/**/*.zip
-            artifacts/**/*.exe
             artifacts/**/*.deb
             artifacts/**/*.rpm
           body: |
@@ -155,7 +152,7 @@ jobs:
             | Platform | File |
             |----------|------|
             | macOS (Apple Silicon) | `.dmg` or `.zip` |
-            | Windows | `.exe` |
+            | Windows | `.zip` |
             | Linux (Debian/Ubuntu) | `.deb` |
             | Linux (Fedora/RHEL) | `.rpm` |
 

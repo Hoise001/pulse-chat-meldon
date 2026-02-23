@@ -1,5 +1,4 @@
 import type { ForgeConfig } from '@electron-forge/shared-types';
-import { MakerSquirrel } from '@electron-forge/maker-squirrel';
 import { MakerZIP } from '@electron-forge/maker-zip';
 import { MakerDMG } from '@electron-forge/maker-dmg';
 import { MakerDeb } from '@electron-forge/maker-deb';
@@ -57,16 +56,14 @@ const config: ForgeConfig = {
     }),
   },
   makers: [
-    new MakerSquirrel({
-      name: 'Pulse',
-    }),
     new MakerDMG({
       format: 'ULFO',
     }),
-    new MakerZIP({}, ['darwin']),
+    new MakerZIP({}, ['darwin', 'win32']),
     new MakerDeb({
       options: {
         name: 'pulse-desktop',
+        bin: 'pulse-desktop',
         productName: 'Pulse',
         icon: './assets/icon.png',
         categories: ['Network', 'Chat'],
@@ -75,6 +72,7 @@ const config: ForgeConfig = {
     new MakerRpm({
       options: {
         name: 'pulse-desktop',
+        bin: 'pulse-desktop',
         productName: 'Pulse',
         icon: './assets/icon.png',
         categories: ['Network', 'Chat'],
