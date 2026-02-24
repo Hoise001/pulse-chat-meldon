@@ -1,5 +1,6 @@
 import { useCurrentVoiceChannelId } from '@/features/server/channels/hooks';
 import { playSound } from '@/features/server/sounds/actions';
+import { useSoundpadStream } from './hooks/use-soundpad-stream';
 import { SoundType } from '@/features/server/types';
 import { logVoice } from '@/helpers/browser-logger';
 import { getResWidthHeight } from '@/helpers/get-res-with-height';
@@ -49,10 +50,12 @@ enum ConnectionStatus {
 }
 
 export type TVoiceProvider = {
+  setLocalAudioStream: (stream: MediaStream | undefined) => void;
   loading: boolean;
   connectionStatus: ConnectionStatus;
   transportStats: TransportStatsData;
   sharingSystemAudio: boolean;
+  playSoundpadAudio: (file: string) => Promise<void>;
   realOutputSinkId: string | undefined;
   audioVideoRefsMap: Map<number, AudioVideoRefs>;
   getOrCreateRefs: (remoteId: number) => AudioVideoRefs;
@@ -73,6 +76,7 @@ export type TVoiceProvider = {
 const VoiceProviderContext = createContext<TVoiceProvider>({
   loading: false,
   connectionStatus: ConnectionStatus.DISCONNECTED,
+  playSoundpadAudio: async () => {},
   transportStats: {
     producer: null,
     consumer: null,
@@ -127,6 +131,9 @@ const VoiceProvider = memo(({ children }: TVoiceProviderProps) => {
   const [sharingSystemAudio, setSharingSystemAudio] = useState(false);
   const [realOutputSinkId, setRealOutputSinkId] = useState<string | undefined>(undefined);
   const routerRtpCapabilities = useRef<RtpCapabilities | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const destinationRef = useRef<MediaStreamAudioDestinationNode | null>(null);
+  const micSourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
   const audioVideoRefsMap = useRef<Map<number, AudioVideoRefs>>(new Map());
   const { devices } = useDevices();
 
@@ -171,7 +178,10 @@ const VoiceProvider = memo(({ children }: TVoiceProviderProps) => {
     setLocalScreenShare,
     clearLocalStreams
   } = useLocalStreams();
-
+  const { playSoundpadAudio } = useSoundpadStream(
+    audioContextRef.current,
+    destinationRef.current
+  );
   const {
     producerTransport,
     consumerTransport,
@@ -194,15 +204,24 @@ const VoiceProvider = memo(({ children }: TVoiceProviderProps) => {
     resetStats
   } = useTransportStats();
 
-  const startMicStream = useCallback(async () => {
+const startMicStream = useCallback(async () => {
     try {
-      logVoice('Starting microphone stream');
+      logVoice('Starting microphone stream with Audio Graph');
 
+      // 1. Создаем контекст и точку назначения один раз
+      if (!audioContextRef.current) {
+        const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+        audioContextRef.current = new AudioContextClass();
+        destinationRef.current = audioContextRef.current.createMediaStreamDestination();
+      }
+
+      const ctx = audioContextRef.current;
+      const dest = destinationRef.current!;
+
+      // 2. Получаем реальный поток микрофона
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
-          deviceId: devices.microphoneId
-            ? { exact: devices.microphoneId }
-            : undefined,
+          deviceId: devices.microphoneId ? { exact: devices.microphoneId } : undefined,
           autoGainControl: devices.autoGainControl,
           echoCancellation: devices.echoCancellation,
           noiseSuppression: devices.noiseSuppression,
@@ -212,51 +231,44 @@ const VoiceProvider = memo(({ children }: TVoiceProviderProps) => {
         video: false
       });
 
-      logVoice('Microphone stream obtained', { stream });
+      // 3. Подключаем физический микрофон к микшеру (сбрасывая старый вход при hot-swap)
+      if (micSourceRef.current) micSourceRef.current.disconnect();
+      micSourceRef.current = ctx.createMediaStreamSource(stream);
+      micSourceRef.current.connect(dest);
 
       setLocalAudioStream(stream);
 
-      const audioTrack = stream.getAudioTracks()[0];
+      // 4. Берем стабильный трек из ВЫХОДА микшера
+      const mixedTrack = dest.stream.getAudioTracks()[0];
 
-      if (audioTrack) {
-        logVoice('Obtained audio track', { audioTrack });
-
+      // 5. Работа с продюсером Mediasoup
+      if (localAudioProducer.current) {
+        // Если уже в эфире — просто меняем трек на mixedTrack (для Hot-swap)
+        await localAudioProducer.current.replaceTrack({ track: mixedTrack });
+      } else {
+        // Если первый запуск — создаем продюсер
         localAudioProducer.current = await producerTransport.current?.produce({
-          track: audioTrack,
+          track: mixedTrack,
           appData: { kind: StreamKind.AUDIO }
         });
 
-        logVoice('Microphone audio producer created', {
-          producer: localAudioProducer.current
-        });
-
+        // Слушатель закрытия (как в твоем оригинале)
         localAudioProducer.current?.on('@close', async () => {
-          logVoice('Audio producer closed');
-
           const trpc = getTRPCClient();
-
           try {
-            await trpc.voice.closeProducer.mutate({
-              kind: StreamKind.AUDIO
-            });
+            await trpc.voice.closeProducer.mutate({ kind: StreamKind.AUDIO });
           } catch (error) {
             logVoice('Error closing audio producer', { error });
           }
         });
-
-        audioTrack.onended = () => {
-          logVoice('Audio track ended, cleaning up microphone');
-
-          localAudioStream?.getAudioTracks().forEach((track) => {
-            track.stop();
-          });
-          localAudioProducer.current?.close();
-
-          setLocalAudioStream(undefined);
-        };
-      } else {
-        throw new Error('Failed to obtain audio track from microphone');
       }
+
+      // Слушатель физического отключения микрофона
+      stream.getAudioTracks()[0].onended = () => {
+        logVoice('Physical mic track ended');
+        // Не закрываем продюсер сразу, чтобы не ломать микшер
+      };
+
     } catch (error) {
       logVoice('Error starting microphone stream', { error });
     }
@@ -264,7 +276,6 @@ const VoiceProvider = memo(({ children }: TVoiceProviderProps) => {
     producerTransport,
     setLocalAudioStream,
     localAudioProducer,
-    localAudioStream,
     devices.microphoneId,
     devices.autoGainControl,
     devices.echoCancellation,
@@ -900,7 +911,7 @@ const VoiceProvider = memo(({ children }: TVoiceProviderProps) => {
       prev.webcamFramerate !== devices.webcamFramerate ||
       prev.webcamResolution !== devices.webcamResolution;
 
-    if (micChanged) {
+    if (micChanged && !isSoundpadActive) {
       reapplyMicSettings(ownVoiceState.micMuted, updateSavedMicTrack);
     }
     if (webcamChanged) {
@@ -913,6 +924,7 @@ const VoiceProvider = memo(({ children }: TVoiceProviderProps) => {
       loading,
       connectionStatus,
       transportStats,
+      playSoundpadAudio,
       sharingSystemAudio,
       realOutputSinkId,
       audioVideoRefsMap: audioVideoRefsMap.current,
@@ -927,6 +939,7 @@ const VoiceProvider = memo(({ children }: TVoiceProviderProps) => {
       ownVoiceState,
 
       localAudioStream,
+      setLocalAudioStream,
       localVideoStream,
       localScreenShareStream,
 
@@ -945,6 +958,7 @@ const VoiceProvider = memo(({ children }: TVoiceProviderProps) => {
       toggleMic,
       toggleSound,
       toggleWebcam,
+      playSoundpadAudio,
       toggleScreenShare,
       updateSavedMicTrack,
       ownVoiceState,

@@ -1,5 +1,6 @@
 import { useCurrentVoiceChannelId } from '@/features/server/channels/hooks';
 import { useChannelCan } from '@/features/server/hooks';
+import { Soundpad } from '@/components/soundpad';
 import { leaveCurrentVoice } from '@/features/server/voice/actions';
 import { useVoice } from '@/features/server/voice/hooks';
 import { cn } from '@/lib/utils';
@@ -124,6 +125,7 @@ const VoiceControl = memo(() => {
               <MonitorOff className="h-4 w-4" />
             )}
           </Button>
+         <Soundpad />
         </div>
       </div>
     </div>

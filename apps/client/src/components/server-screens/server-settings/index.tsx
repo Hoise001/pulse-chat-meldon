@@ -14,6 +14,7 @@ import { useActiveInstanceDomain, useActiveServerId, useJoinedServers } from '@/
 import { useCan } from '@/features/server/hooks';
 import { useOwnUserId } from '@/features/server/users/hooks';
 import { Permission } from '@pulse/shared';
+import { Soundpad } from './soundpad';
 import { memo, useCallback, useMemo, useState } from 'react';
 import type { TServerScreenBaseProps } from '../screens';
 import { ServerScreenLayout } from '../server-screen-layout';
@@ -78,6 +79,9 @@ const ServerSettings = memo(({ close }: TServerSettingsProps) => {
             >
               Emojis
             </TabsTrigger>
+            <TabsTrigger value="soundpad" disabled={!can(Permission.MANAGE_PLUGINS)}>
+              Soundpad
+            </TabsTrigger>
             <TabsTrigger value="users" disabled={!can(Permission.MANAGE_USERS)}>
               Users
             </TabsTrigger>
@@ -124,6 +128,9 @@ const ServerSettings = memo(({ close }: TServerSettingsProps) => {
           </TabsContent>
           <TabsContent value="emojis" className="space-y-6">
             {can(Permission.MANAGE_EMOJIS) && <Emojis />}
+          </TabsContent>
+          <TabsContent value="soundpad" className="space-y-6">
+            {can(Permission.MANAGE_PLUGINS) && <Soundpad />}
           </TabsContent>
           <TabsContent value="users" className="space-y-6">
             {can(Permission.MANAGE_USERS) && <Users />}

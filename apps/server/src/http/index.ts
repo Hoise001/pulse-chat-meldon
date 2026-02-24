@@ -1,5 +1,6 @@
 import chalk from 'chalk';
 import http from 'http';
+import { soundpadListHandler, soundpadUploadHandler, soundpadDeleteHandler } from './soundpad';
 import z from 'zod';
 import { config } from '../config';
 import { getWsInfo } from '../helpers/get-ws-info';
@@ -157,7 +158,15 @@ const createHttpServer = async (port: number = config.server.port) => {
               );
             }
           }
-
+          if (req.method === 'GET' && req.url === '/api/soundpad/list') {
+            return await soundpadListHandler(req, res);
+          }
+          if (req.method === 'POST' && req.url === '/api/soundpad/upload') {
+            return await soundpadUploadHandler(req, res);
+          }
+          if (req.method === 'DELETE' && req.url?.startsWith('/api/soundpad/delete')) {
+            return await soundpadDeleteHandler(req, res);
+          }
           if (req.method === 'GET' && req.url?.startsWith('/public')) {
             return await publicRouteHandler(req, res);
           }
