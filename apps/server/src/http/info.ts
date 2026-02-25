@@ -32,6 +32,7 @@ const infoRouteHandler = async (
     name: server.name,
     description: server.description,
     logo: server.logo,
+    banner: server.banner ?? null,
     allowNewUsers: server.allowNewUsers,
     registrationDisabled: isRegistrationDisabled(),
     enabledAuthProviders,

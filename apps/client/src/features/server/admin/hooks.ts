@@ -68,6 +68,7 @@ export const useAdminGeneral = (serverId: number | undefined) => {
     federatable: false
   });
   const [logo, setLogo] = useState<TFile | null>(null);
+  const [banner, setBanner] = useState<TFile | null>(null);
 
   const fetchSettings = useCallback(async () => {
     if (!serverId) return;
@@ -87,6 +88,7 @@ export const useAdminGeneral = (serverId: number | undefined) => {
     });
     setLoading(false);
     setLogo(result.logo);
+    setBanner(result.banner ?? null);
   }, [serverId]);
 
   const submit = useCallback(async () => {
@@ -130,7 +132,8 @@ export const useAdminGeneral = (serverId: number | undefined) => {
     submit,
     errors,
     onChange,
-    logo
+    logo,
+    banner
   };
 };
 

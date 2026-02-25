@@ -3,7 +3,11 @@ import { resetDialogs } from '@/features/dialogs/actions';
 import { resetDmsState } from '@/features/dms/actions';
 import { resetFriendsState } from '@/features/friends/actions';
 import { resetServerScreens } from '@/features/server-screens/actions';
-import { resetServerState, setDisconnectInfo } from '@/features/server/actions';
+import {
+  resetServerState,
+  setConnected,
+  setDisconnectInfo
+} from '@/features/server/actions';
 import { store } from '@/features/store';
 import { getAccessToken, supabase } from '@/lib/supabase';
 import { connectionManager } from '@/lib/connection-manager';
@@ -13,8 +17,41 @@ import { createTRPCProxyClient, createWSClient, wsLink } from '@trpc/client';
 
 let wsClient: ReturnType<typeof createWSClient> | null = null;
 let trpc: ReturnType<typeof createTRPCProxyClient<AppRouter>> | null = null;
+let lastHomeTrpc: ReturnType<typeof createTRPCProxyClient<AppRouter>> | null =
+  null;
+let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
+let heartbeatInFlight = false;
 /** Set to true when the client intentionally closes the connection (sign-out). */
 let intentionalClose = false;
+
+const HEARTBEAT_MS = 25_000;
+
+const stopHeartbeat = () => {
+  if (heartbeatTimer) {
+    clearInterval(heartbeatTimer);
+    heartbeatTimer = null;
+  }
+  heartbeatInFlight = false;
+};
+
+const startHeartbeat = () => {
+  stopHeartbeat();
+
+  heartbeatTimer = setInterval(() => {
+    if (!trpc || heartbeatInFlight) return;
+
+    heartbeatInFlight = true;
+
+    trpc.others.handshake
+      .query()
+      .catch(() => {
+        // Ignore heartbeat failures; reconnect/onClose flow handles recovery.
+      })
+      .finally(() => {
+        heartbeatInFlight = false;
+      });
+  }, HEARTBEAT_MS);
+};
 
 /** Whether a disconnect code means the user cannot reconnect. */
 const isNonRecoverable = (code: number) =>
@@ -25,23 +62,39 @@ const initializeTRPC = (host: string) => {
 
   wsClient = createWSClient({
     url: `${protocol}://${host}`,
+    onOpen: () => {
+      // createWSClient auto-reconnects internally; when the socket is back,
+      // immediately clear reconnect UI/state.
+      stopReconnecting();
+      setConnected(true);
+      setDisconnectInfo(undefined);
+      startHeartbeat();
+    },
     // @ts-expect-error - the onclose type is not correct in trpc
     onClose: (cause: CloseEvent) => {
       const code = cause.code;
-
-      // Null out the ws/trpc references so connect() recreates them
-      wsClient = null;
-      trpc = null;
-
+        console.warn('[trpc/ws] socket closed', {
+          code,
+          reason: cause.reason,
+          wasClean: cause.wasClean
+        });
 
       // If we intentionally closed (user sign-out / cleanup), do nothing —
       // cleanup() already handles the full teardown
       if (intentionalClose) {
+        wsClient = null;
+        trpc = null;
+        lastHomeTrpc = null;
+        stopHeartbeat();
         intentionalClose = false;
         return;
       }
 
       if (isNonRecoverable(code)) {
+        wsClient = null;
+        trpc = null;
+        lastHomeTrpc = null;
+        stopHeartbeat();
         // Kicked/Banned — full teardown, show the Disconnected screen
         fullTeardown();
         setDisconnectInfo({
@@ -69,6 +122,8 @@ const initializeTRPC = (host: string) => {
   trpc = createTRPCProxyClient<AppRouter>({
     links: [wsLink({ client: wsClient })]
   });
+  lastHomeTrpc = trpc;
+  startHeartbeat();
 
   return trpc;
 };
@@ -89,6 +144,10 @@ const getTRPCClient = () => {
   }
 
   if (!trpc) {
+    if (lastHomeTrpc) {
+      return lastHomeTrpc;
+    }
+
     throw new Error('TRPC client is not initialized');
   }
 
@@ -99,6 +158,10 @@ const getTRPCClient = () => {
 // other operations that must never target a remote federated instance
 const getHomeTRPCClient = () => {
   if (!trpc) {
+    if (lastHomeTrpc) {
+      return lastHomeTrpc;
+    }
+
     throw new Error('TRPC client is not initialized');
   }
 
@@ -125,6 +188,8 @@ const cleanup = (signOut = false) => {
   }
 
   trpc = null;
+  lastHomeTrpc = null;
+  stopHeartbeat();
   fullTeardown();
 
   if (signOut) {

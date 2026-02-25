@@ -46,6 +46,16 @@ if [ "$SYNCED" -eq 0 ]; then
   exit 1
 fi
 
+
+# Run all SQL migrations in /docker-entrypoint-initdb.d
+if [ -d /docker-entrypoint-initdb.d ]; then
+  for f in /docker-entrypoint-initdb.d/*.sql; do
+    [ -e "$f" ] || continue
+    echo "db-entrypoint: running migration $f"
+    psql -U postgres -d postgres -f "$f"
+  done
+fi
+
 # Signal that DB init is complete (used by healthcheck)
 touch /tmp/.db-init-complete
 echo "db-entrypoint: ready"

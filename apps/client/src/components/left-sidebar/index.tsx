@@ -11,12 +11,13 @@ import {
   leaveServer,
   setActiveView
 } from '@/features/app/actions';
-import { useActiveServerId } from '@/features/app/hooks';
+import { useActiveServerId, useJoinedServers } from '@/features/app/hooks';
 import { openDialog, requestConfirmation } from '@/features/dialogs/actions';
 import { openServerScreen } from '@/features/server-screens/actions';
 import { disconnectFromServer } from '@/features/server/actions';
 import { useIsOwnUserOwner, useServerName } from '@/features/server/hooks';
 import { cn } from '@/lib/utils';
+import { getFileUrl } from '@/helpers/get-file-url';
 import { getTRPCClient } from '@/lib/trpc';
 import { Permission } from '@pulse/shared';
 import { ChevronDown, LogOut } from 'lucide-react';
@@ -37,6 +38,8 @@ const LeftSidebar = memo(({ className }: TLeftSidebarProps) => {
   const serverName = useServerName();
   const isOwner = useIsOwnUserOwner();
   const activeServerId = useActiveServerId();
+  const joinedServers = useJoinedServers();
+  const activeServer = joinedServers.find(s => s.id === activeServerId);
 
   const handleDeleteServer = useCallback(async () => {
     if (!activeServerId) return;
@@ -116,6 +119,15 @@ const LeftSidebar = memo(({ className }: TLeftSidebarProps) => {
         className
       )}
     >
+      {activeServer?.banner && (
+        <div className="w-full h-20 overflow-hidden flex-shrink-0">
+          <img
+            src={getFileUrl(activeServer.banner)}
+            alt="Server banner"
+            className="w-full h-full object-cover"
+          />
+        </div>
+      )}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button className="flex w-full justify-between h-12 items-center border-b border-border px-4 hover:bg-accent transition-colors cursor-pointer">

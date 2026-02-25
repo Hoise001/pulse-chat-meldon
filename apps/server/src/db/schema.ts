@@ -50,6 +50,9 @@ const settings = pgTable(
     logoId: integer('logo_id').references(() => files.id, {
       onDelete: 'set null'
     }),
+    bannerId: integer('banner_id').references(() => files.id, {
+      onDelete: 'set null'
+    }),
     allowNewUsers: boolean('allow_new_users').notNull(),
     storageUploadEnabled: boolean('storage_uploads_enabled').notNull(),
     storageQuota: bigint('storage_quota', { mode: 'number' }).notNull(),
@@ -78,6 +81,9 @@ const servers = pgTable(
     publicId: text('public_id').notNull().unique(),
     secretToken: text('secret_token'),
     logoId: integer('logo_id').references(() => files.id, {
+      onDelete: 'set null'
+    }),
+    bannerId: integer('banner_id').references(() => files.id, {
       onDelete: 'set null'
     }),
     ownerId: integer('owner_id').references(() => users.id, {

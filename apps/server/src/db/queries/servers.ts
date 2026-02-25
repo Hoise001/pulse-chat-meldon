@@ -30,10 +30,20 @@ const getServerById = async (
           .limit(1)
       )[0]
     : undefined;
+  const banner = server.bannerId
+    ? (
+        await db
+          .select()
+          .from(files)
+          .where(eq(files.id, server.bannerId))
+          .limit(1)
+      )[0]
+    : undefined;
 
   return {
     ...server,
-    logo: logo ?? null
+    logo: logo ?? null,
+    banner: banner ?? null
   };
 };
 
@@ -57,10 +67,20 @@ const getServerByPublicId = async (
           .limit(1)
       )[0]
     : undefined;
+  const banner = server.bannerId
+    ? (
+        await db
+          .select()
+          .from(files)
+          .where(eq(files.id, server.bannerId))
+          .limit(1)
+      )[0]
+    : undefined;
 
   return {
     ...server,
-    logo: logo ?? null
+    logo: logo ?? null,
+    banner: banner ?? null
   };
 };
 
@@ -73,6 +93,7 @@ const getServersByUserId = async (
       name: servers.name,
       publicId: servers.publicId,
       logoId: servers.logoId,
+      bannerId: servers.bannerId,
       ownerId: servers.ownerId
     })
     .from(serverMembers)
@@ -92,6 +113,15 @@ const getServersByUserId = async (
             .limit(1)
         )[0]
       : undefined;
+    const banner = row.bannerId
+      ? (
+          await db
+            .select()
+            .from(files)
+            .where(eq(files.id, row.bannerId))
+            .limit(1)
+        )[0]
+      : undefined;
 
     const result = await db
       .select({ count: count() })
@@ -105,6 +135,7 @@ const getServersByUserId = async (
       name: row.name,
       publicId: row.publicId,
       logo: logo ?? null,
+      banner: banner ?? null,
       memberCount,
       ownerId: row.ownerId
     });
@@ -184,10 +215,20 @@ const getFirstServer = async (): Promise<TJoinedServer | undefined> => {
           .limit(1)
       )[0]
     : undefined;
+  const banner = server.bannerId
+    ? (
+        await db
+          .select()
+          .from(files)
+          .where(eq(files.id, server.bannerId))
+          .limit(1)
+      )[0]
+    : undefined;
 
   return {
     ...server,
-    logo: logo ?? null
+    logo: logo ?? null,
+    banner: banner ?? null
   };
 };
 
@@ -209,6 +250,7 @@ const getDiscoverableServers = async (
       name: servers.name,
       publicId: servers.publicId,
       logoId: servers.logoId,
+      bannerId: servers.bannerId,
       ownerId: servers.ownerId,
       description: servers.description,
       password: servers.password
@@ -228,6 +270,15 @@ const getDiscoverableServers = async (
             .limit(1)
         )[0]
       : undefined;
+    const banner = row.bannerId
+      ? (
+          await db
+            .select()
+            .from(files)
+            .where(eq(files.id, row.bannerId))
+            .limit(1)
+        )[0]
+      : undefined;
 
     const result = await db
       .select({ count: count() })
@@ -241,6 +292,7 @@ const getDiscoverableServers = async (
       name: row.name,
       publicId: row.publicId,
       logo: logo ?? null,
+      banner: banner ?? null,
       memberCount,
       ownerId: row.ownerId,
       description: row.description,

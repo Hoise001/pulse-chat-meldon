@@ -194,6 +194,7 @@ export type TJoinedSettings = TSettings & {
 
 export type TJoinedServer = TServer & {
   logo: TFile | null;
+  banner: TFile | null;
 };
 
 export type TServerSummary = {
@@ -201,6 +202,7 @@ export type TServerSummary = {
   name: string;
   publicId: string;
   logo: TFile | null;
+  banner?: TFile | null;
   memberCount?: number;
   ownerId?: number | null;
   description?: string | null;

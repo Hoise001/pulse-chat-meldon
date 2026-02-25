@@ -1,7 +1,8 @@
 import { subscribeToDms } from '@/features/dms/subscriptions';
 import { subscribeToFriends } from '@/features/friends/subscriptions';
 import { getTRPCClient } from '@/lib/trpc';
-import type { TPublicServerSettings, TServerSummary } from '@pulse/shared';
+import type { TPublicServerSettings } from '../../../../../packages/shared/src/types';
+import type { TServerSummary } from '../../../../../packages/shared/src/tables';
 import { appSliceActions } from '../app/slice';
 import { store } from '../store';
 import { setPublicServerSettings } from './actions';
@@ -20,9 +21,16 @@ const subscribeToServer = () => {
   const onSettingsUpdateSub = trpc.others.onServerSettingsUpdate.subscribe(
     undefined,
     {
-      onData: (settings: TPublicServerSettings) =>
-        setPublicServerSettings(settings),
-      onError: (err) =>
+      onData: async (settings: TPublicServerSettings) => {
+        setPublicServerSettings(settings);
+        const { fetchServerInfo, fetchJoinedServers } = await import('../app/actions');
+        const { setInfo } = await import('./actions');
+        const info = await fetchServerInfo();
+        if (info) setInfo(info);
+        // Always force a full joinedServers refresh to guarantee UI sync
+        await fetchJoinedServers();
+      },
+      onError: (err: unknown) =>
         console.error('onSettingsUpdate subscription error:', err)
     }
   );
@@ -37,7 +45,7 @@ const subscribeToServer = () => {
     }) => {
       store.dispatch(appSliceActions.addJoinedServer(server));
     },
-    onError: (err) =>
+    onError: (err: unknown) =>
       console.error('onServerMemberJoin subscription error:', err)
   });
 
@@ -45,7 +53,7 @@ const subscribeToServer = () => {
     onData: ({ serverId }: { serverId: number; userId: number }) => {
       store.dispatch(appSliceActions.removeJoinedServer(serverId));
     },
-    onError: (err) =>
+    onError: (err: unknown) =>
       console.error('onServerMemberLeave subscription error:', err)
   });
 
@@ -60,7 +68,7 @@ const subscribeToServer = () => {
           })
         );
       },
-      onError: (err) =>
+      onError: (err: unknown) =>
         console.error('onUnreadCountUpdate subscription error:', err)
     });
 

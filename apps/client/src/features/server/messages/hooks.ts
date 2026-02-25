@@ -90,6 +90,9 @@ export const useMessages = (channelId: number) => {
         setHasMore(nextCursor !== null);
 
         return { success: true };
+      } catch (error) {
+        console.warn('[messages] failed to fetch channel messages:', error);
+        return { success: false };
       } finally {
         setFetching(false);
         setLoading(false);

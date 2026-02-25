@@ -19,11 +19,20 @@ const LogoManager = memo(({ logo, serverId, refetch }: TLogoManagerProps) => {
   const removeLogo = useCallback(async () => {
     if (!serverId) return;
     const trpc = getTRPCClient();
-
     try {
       await trpc.others.changeLogo.mutate({ serverId, fileId: undefined });
+      // Optimistically update Redux joinedServers
+      try {
+        const { store } = await import('@/features/store');
+        const { appSliceActions } = await import('@/features/app/slice');
+        const state = store.getState();
+        const joinedServers = state.app.joinedServers;
+        const updatedServers = joinedServers.map((s) =>
+          s.id === serverId ? { ...s, logo: null, banner: s.banner } : s
+        );
+        store.dispatch(appSliceActions.setJoinedServers(updatedServers));
+      } catch {}
       await refetch();
-
       toast.success('Logo removed successfully!');
     } catch (error) {
       console.error(error);
@@ -34,20 +43,26 @@ const LogoManager = memo(({ logo, serverId, refetch }: TLogoManagerProps) => {
   const onLogoClick = useCallback(async () => {
     if (!serverId) return;
     const trpc = getTRPCClient();
-
     try {
       const [file] = await openFilePicker('image/*');
-
       const temporaryFile = await uploadFile(file);
-
       if (!temporaryFile) {
         toast.error('Could not upload file. Please try again.');
         return;
       }
-
       await trpc.others.changeLogo.mutate({ serverId, fileId: temporaryFile.id });
+      // Optimistically update Redux joinedServers
+      try {
+        const { store } = await import('@/features/store');
+        const { appSliceActions } = await import('@/features/app/slice');
+        const state = store.getState();
+        const joinedServers = state.app.joinedServers;
+        const updatedServers = joinedServers.map((s) =>
+          s.id === serverId ? { ...s, logo: temporaryFile, banner: s.banner } : s
+        );
+        store.dispatch(appSliceActions.setJoinedServers(updatedServers));
+      } catch {}
       await refetch();
-
       toast.success('Logo updated successfully!');
     } catch {
       toast.error('Could not update logo. Please try again.');

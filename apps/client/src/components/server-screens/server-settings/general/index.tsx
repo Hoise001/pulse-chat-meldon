@@ -16,10 +16,11 @@ import { closeServerScreens } from '@/features/server-screens/actions';
 import { useAdminGeneral } from '@/features/server/admin/hooks';
 import { memo } from 'react';
 import { LogoManager } from './logo-manager';
+import { BannerManager } from './banner-manager';
 
 const General = memo(() => {
   const activeServerId = useActiveServerId();
-  const { settings, logo, loading, onChange, submit, errors, refetch } =
+  const { settings, logo, banner, loading, onChange, submit, errors, refetch } =
     useAdminGeneral(activeServerId);
 
   if (loading) {
@@ -63,6 +64,7 @@ const General = memo(() => {
         </Group>
 
         <LogoManager logo={logo} serverId={activeServerId} refetch={refetch} />
+        <BannerManager banner={banner} serverId={activeServerId} refetch={refetch} />
 
         <Group
           label="Allow New Users"

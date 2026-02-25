@@ -43,6 +43,7 @@ export type TPublicServerSettings = Pick<
   | "storageSpaceQuotaByUser"
   | "storageOverflowAction"
   | "enablePlugins"
+  | "bannerId"
 >;
 
 export type TGenericObject = {
@@ -98,6 +99,7 @@ export type TServerInfo = Pick<
 > & {
   id?: number;
   logo: TFile | null;
+  banner: TFile | null;
   version: string;
   registrationDisabled?: boolean;
   enabledAuthProviders?: string[];

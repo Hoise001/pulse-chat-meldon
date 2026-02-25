@@ -33,6 +33,15 @@ const getSettingsRoute = protectedProcedure
             .limit(1)
         )[0]
       : undefined;
+    const banner = server.bannerId
+      ? (
+          await db
+            .select()
+            .from(files)
+            .where(eq(files.id, server.bannerId))
+            .limit(1)
+        )[0]
+      : undefined;
 
     return {
       name: server.name,
@@ -47,7 +56,8 @@ const getSettingsRoute = protectedProcedure
       storageOverflowAction: server.storageOverflowAction,
       discoverable: server.discoverable,
       federatable: server.federatable,
-      logo: logo ?? null
+      logo: logo ?? null,
+      banner: banner ?? null
     };
   });
 

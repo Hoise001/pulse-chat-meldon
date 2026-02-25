@@ -22,10 +22,20 @@ const getSettings = async (): Promise<TJoinedSettings> => {
           .limit(1)
       )[0]
     : undefined;
+  const banner = serverSettings.bannerId
+    ? (
+        await db
+          .select()
+          .from(files)
+          .where(eq(files.id, serverSettings.bannerId))
+          .limit(1)
+      )[0]
+    : undefined;
 
   return {
     ...serverSettings,
-    logo: logo ?? null
+    logo: logo ?? null,
+    banner: banner ?? null
   };
 };
 
@@ -52,7 +62,8 @@ const getServerPublicSettings = async (
     storageUploadMaxFileSize: server.storageUploadMaxFileSize,
     storageSpaceQuotaByUser: server.storageSpaceQuotaByUser,
     storageOverflowAction: server.storageOverflowAction,
-    enablePlugins: server.enablePlugins
+    enablePlugins: server.enablePlugins,
+    bannerId: server.bannerId ?? null
   };
 };
 
