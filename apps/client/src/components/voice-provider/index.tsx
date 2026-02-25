@@ -102,7 +102,6 @@ const VoiceProviderContext = createContext<TVoiceProvider>({
   toggleSound: () => Promise.resolve(),
   toggleWebcam: () => Promise.resolve(),
   toggleScreenShare: () => Promise.resolve(),
-  updateSavedMicTrack: () => {},
   ownVoiceState: {
     micMuted: false,
     soundMuted: false,
@@ -134,6 +133,7 @@ const VoiceProvider = memo(({ children }: TVoiceProviderProps) => {
   const audioContextRef = useRef<AudioContext | null>(null);
   const destinationRef = useRef<MediaStreamAudioDestinationNode | null>(null);
   const micSourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
+  const micGainRef = useRef<GainNode | null>(null);
   const audioVideoRefsMap = useRef<Map<number, AudioVideoRefs>>(new Map());
   const { devices } = useDevices();
 
@@ -179,8 +179,8 @@ const VoiceProvider = memo(({ children }: TVoiceProviderProps) => {
     clearLocalStreams
   } = useLocalStreams();
   const { playSoundpadAudio } = useSoundpadStream(
-    audioContextRef.current,
-    destinationRef.current
+    audioContextRef,
+    destinationRef
   );
   const {
     producerTransport,
@@ -234,7 +234,14 @@ const startMicStream = useCallback(async () => {
       // 3. Подключаем физический микрофон к микшеру (сбрасывая старый вход при hot-swap)
       if (micSourceRef.current) micSourceRef.current.disconnect();
       micSourceRef.current = ctx.createMediaStreamSource(stream);
-      micSourceRef.current.connect(dest);
+      // Create gain node once; it persists across device hot-swaps and
+      // mute/unmute cycles — the producer track never needs replacing for mute.
+      if (!micGainRef.current) {
+        micGainRef.current = ctx.createGain();
+        micGainRef.current.gain.value = 1; // start unmuted
+        micGainRef.current.connect(dest);
+      }
+      micSourceRef.current.connect(micGainRef.current);
 
       setLocalAudioStream(stream);
 
@@ -281,6 +288,11 @@ const startMicStream = useCallback(async () => {
     devices.echoCancellation,
     devices.noiseSuppression
   ]);
+
+  const setMicGain = useCallback((gain: number) => {
+    if (!micGainRef.current || !audioContextRef.current) return;
+    micGainRef.current.gain.setValueAtTime(gain, audioContextRef.current.currentTime);
+  }, []);
 
   const startWebcamStream = useCallback(async () => {
     try {
@@ -676,53 +688,11 @@ const startMicStream = useCallback(async () => {
   ]);
 
   // Hot-swap microphone track on the existing producer when device settings change
-  const reapplyMicSettings = useCallback(async (micMuted: boolean, savedMicTrackUpdater: (track: MediaStreamTrack | null) => void) => {
+  const reapplyMicSettings = useCallback(async () => {
     if (!localAudioProducer.current || localAudioProducer.current.closed) return;
-
-    try {
-      logVoice('Reapplying mic settings mid-call');
-
-      const newStream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          deviceId: devices.microphoneId
-            ? { exact: devices.microphoneId }
-            : undefined,
-          autoGainControl: devices.autoGainControl,
-          echoCancellation: devices.echoCancellation,
-          noiseSuppression: devices.noiseSuppression,
-          sampleRate: 48000,
-          channelCount: 2
-        },
-        video: false
-      });
-
-      const newTrack = newStream.getAudioTracks()[0];
-      if (!newTrack) return;
-
-      // Stop old tracks
-      localAudioStream?.getAudioTracks().forEach((t) => t.stop());
-
-      if (micMuted) {
-        // Mic is muted — update the saved track so unmute uses the new device
-        savedMicTrackUpdater(newTrack);
-      } else {
-        await localAudioProducer.current!.replaceTrack({ track: newTrack });
-      }
-
-      setLocalAudioStream(newStream);
-      logVoice('Mic settings reapplied successfully');
-    } catch (error) {
-      logVoice('Error reapplying mic settings', { error });
-    }
-  }, [
-    localAudioProducer,
-    localAudioStream,
-    setLocalAudioStream,
-    devices.microphoneId,
-    devices.autoGainControl,
-    devices.echoCancellation,
-    devices.noiseSuppression
-  ]);
+    logVoice('Reapplying mic settings mid-call');
+    await startMicStream();
+  }, [startMicStream, localAudioProducer]);
 
   // Hot-swap webcam track on the existing producer when device settings change
   const reapplyWebcamSettings = useCallback(async (webcamEnabled: boolean) => {
@@ -764,6 +734,23 @@ const startMicStream = useCallback(async () => {
 
   const cleanup = useCallback(() => {
     logVoice('Running voice provider cleanup');
+
+    // Fully tear down the Web Audio graph so startMicStream always rebuilds
+    // it fresh on on rejoin. Without this the AudioContext may be suspended
+    // by the browser between sessions and no audio flows on the second join.
+    if (micSourceRef.current) {
+      try { micSourceRef.current.disconnect(); } catch { /* no-op */ }
+      micSourceRef.current = null;
+    }
+    if (micGainRef.current) {
+      try { micGainRef.current.disconnect(); } catch { /* no-op */ }
+      micGainRef.current = null;
+    }
+    if (audioContextRef.current) {
+      try { audioContextRef.current.close(); } catch { /* no-op */ }
+      audioContextRef.current = null;
+    }
+    destinationRef.current = null;
 
     stopMonitoring();
     resetStats();
@@ -841,12 +828,9 @@ const startMicStream = useCallback(async () => {
     toggleSound,
     toggleWebcam,
     toggleScreenShare,
-    updateSavedMicTrack,
     ownVoiceState
   } = useVoiceControls({
-    startMicStream,
-    localAudioStream,
-    localAudioProducer,
+    setMicGain,
     startWebcamStream,
     stopWebcamStream,
     startScreenShareStream,
@@ -911,13 +895,13 @@ const startMicStream = useCallback(async () => {
       prev.webcamFramerate !== devices.webcamFramerate ||
       prev.webcamResolution !== devices.webcamResolution;
 
-    if (micChanged && !isSoundpadActive) {
-      reapplyMicSettings(ownVoiceState.micMuted, updateSavedMicTrack);
+    if (micChanged) {
+      reapplyMicSettings();
     }
     if (webcamChanged) {
       reapplyWebcamSettings(ownVoiceState.webcamEnabled);
     }
-  }, [devices, connectionStatus, reapplyMicSettings, reapplyWebcamSettings, ownVoiceState.micMuted, ownVoiceState.webcamEnabled, updateSavedMicTrack]);
+  }, [devices, connectionStatus, reapplyMicSettings, reapplyWebcamSettings, ownVoiceState.webcamEnabled]);
 
   const contextValue = useMemo<TVoiceProvider>(
     () => ({
@@ -935,7 +919,6 @@ const startMicStream = useCallback(async () => {
       toggleSound,
       toggleWebcam,
       toggleScreenShare,
-      updateSavedMicTrack,
       ownVoiceState,
 
       localAudioStream,
@@ -960,7 +943,6 @@ const startMicStream = useCallback(async () => {
       toggleWebcam,
       playSoundpadAudio,
       toggleScreenShare,
-      updateSavedMicTrack,
       ownVoiceState,
 
       localAudioStream,

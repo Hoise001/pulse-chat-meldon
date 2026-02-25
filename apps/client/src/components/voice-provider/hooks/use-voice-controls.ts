@@ -5,14 +5,12 @@ import { updateOwnVoiceState } from '@/features/server/voice/actions';
 import { useOwnVoiceState } from '@/features/server/voice/hooks';
 import { getTrpcError } from '@/helpers/parse-trpc-errors';
 import { getTRPCClient } from '@/lib/trpc';
-import type { AppData, Producer } from 'mediasoup-client/types';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback } from 'react';
 import { toast } from 'sonner';
 
 type TUseVoiceControlsParams = {
-  startMicStream: () => Promise<void>;
-  localAudioStream: MediaStream | undefined;
-  localAudioProducer: React.RefObject<Producer<AppData> | undefined>;
+  /** Sets the microphone gain (0 = muted, 1 = unmuted). */
+  setMicGain: (gain: number) => void;
 
   startWebcamStream: () => Promise<void>;
   stopWebcamStream: () => void;
@@ -22,9 +20,7 @@ type TUseVoiceControlsParams = {
 };
 
 const useVoiceControls = ({
-  startMicStream,
-  localAudioStream,
-  localAudioProducer,
+  setMicGain,
   startWebcamStream,
   stopWebcamStream,
   startScreenShareStream,
@@ -32,18 +28,6 @@ const useVoiceControls = ({
 }: TUseVoiceControlsParams) => {
   const ownVoiceState = useOwnVoiceState();
   const currentVoiceChannelId = useCurrentVoiceChannelId();
-
-  // Store the real mic track so we can restore it when unmuting.
-  // Using replaceTrack instead of track.enabled avoids a macOS browser bug
-  // where disabling one getUserMedia audio track affects other audio captures
-  // (e.g., screen share system audio via virtual audio device).
-  const realMicTrackRef = useRef<MediaStreamTrack | null>(null);
-
-  // Mirror localAudioStream state in a ref to avoid stale closure in toggleMic
-  const localAudioStreamRef = useRef(localAudioStream);
-  useEffect(() => {
-    localAudioStreamRef.current = localAudioStream;
-  }, [localAudioStream]);
 
   const toggleMic = useCallback(async () => {
     const newState = !ownVoiceState.micMuted;
@@ -56,62 +40,23 @@ const useVoiceControls = ({
 
     if (!currentVoiceChannelId) return;
 
-    // Mute/unmute by replacing the producer's track rather than setting
-    // track.enabled. On macOS, track.enabled = false on one getUserMedia
-    // capture can interfere with other concurrent audio captures (e.g.,
-    // the Pulse Audio virtual device used for screen share system audio).
-    const stream = localAudioStreamRef.current;
-    const producer = localAudioProducer.current;
-    if (producer && !producer.closed) {
-      try {
-        if (newState) {
-          // Muting: save the real track and replace with nothing
-          const currentTrack = stream?.getAudioTracks()[0];
-          if (currentTrack) {
-            realMicTrackRef.current = currentTrack;
-          }
-          await producer.replaceTrack({ track: null });
-        } else {
-          // Unmuting: restore the real mic track
-          const savedTrack = realMicTrackRef.current;
-          if (savedTrack && savedTrack.readyState === 'live') {
-            await producer.replaceTrack({ track: savedTrack });
-            realMicTrackRef.current = null;
-          } else {
-            // Track was ended/lost — re-acquire the mic
-            realMicTrackRef.current = null;
-            await startMicStream();
-          }
-        }
-      } catch {
-        // Fallback: if replaceTrack fails, use track.enabled
-        stream?.getAudioTracks().forEach((track) => {
-          track.enabled = !newState;
-        });
-      }
-    } else {
-      // No producer yet — use track.enabled as fallback
-      stream?.getAudioTracks().forEach((track) => {
-        track.enabled = !newState;
-      });
-    }
+    // Control mute purely via the AudioContext GainNode — the mediasoup producer
+    // track is never replaced. gain=0 sends silence over RTP; gain=1 restores
+    // mic audio. This avoids all replaceTrack(null/track) state issues across
+    // different browsers and mediasoup-client versions.
+    setMicGain(newState ? 0 : 1);
 
     try {
       await trpc.voice.updateState.mutate({
         micMuted: newState
       });
-
-      if (!stream) {
-        await startMicStream();
-      }
     } catch (error) {
       toast.error(getTrpcError(error, 'Failed to update microphone state'));
     }
   }, [
     ownVoiceState.micMuted,
-    startMicStream,
     currentVoiceChannelId,
-    localAudioProducer
+    setMicGain
   ]);
 
   const toggleSound = useCallback(async () => {
@@ -242,16 +187,11 @@ const useVoiceControls = ({
     stopScreenShareStream
   ]);
 
-  const updateSavedMicTrack = useCallback((track: MediaStreamTrack | null) => {
-    realMicTrackRef.current = track;
-  }, []);
-
   return {
     toggleMic,
     toggleSound,
     toggleWebcam,
     toggleScreenShare,
-    updateSavedMicTrack,
     ownVoiceState
   };
 };
