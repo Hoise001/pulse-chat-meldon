@@ -30,6 +30,8 @@ import { useTransports } from './hooks/use-transports';
 import { useVoiceControls } from './hooks/use-voice-controls';
 import { useVoiceEvents } from './hooks/use-voice-events';
 import { VolumeControlProvider } from './volume-control-context';
+import { ownVoiceStateSelector } from '@/features/server/voice/selectors';
+import { useSelector } from 'react-redux';
 
 type AudioVideoRefs = {
   videoRef: React.RefObject<HTMLVideoElement | null>;
@@ -134,8 +136,16 @@ const VoiceProvider = memo(({ children }: TVoiceProviderProps) => {
   const destinationRef = useRef<MediaStreamAudioDestinationNode | null>(null);
   const micSourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
   const micGainRef = useRef<GainNode | null>(null);
+  const micMutedRef = useRef(false);
   const audioVideoRefsMap = useRef<Map<number, AudioVideoRefs>>(new Map());
   const { devices } = useDevices();
+  const ownVoiceStateForRef = useSelector(ownVoiceStateSelector);
+
+  // Keep micMutedRef in sync with Redux so startMicStream can read the
+  // correct mute state without being in its dependency array.
+  useEffect(() => {
+    micMutedRef.current = ownVoiceStateForRef.micMuted;
+  }, [ownVoiceStateForRef.micMuted]);
 
   const getOrCreateRefs = useCallback((remoteId: number): AudioVideoRefs => {
     if (!audioVideoRefsMap.current.has(remoteId)) {
@@ -238,7 +248,8 @@ const startMicStream = useCallback(async () => {
       // mute/unmute cycles — the producer track never needs replacing for mute.
       if (!micGainRef.current) {
         micGainRef.current = ctx.createGain();
-        micGainRef.current.gain.value = 1; // start unmuted
+        // Honour the mute state that was set before joining the channel.
+        micGainRef.current.gain.value = micMutedRef.current ? 0 : 1;
         micGainRef.current.connect(dest);
       }
       micSourceRef.current.connect(micGainRef.current);
