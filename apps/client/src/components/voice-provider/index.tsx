@@ -132,6 +132,7 @@ const VoiceProvider = memo(({ children }: TVoiceProviderProps) => {
   const [sharingSystemAudio, setSharingSystemAudio] = useState(false);
   const [realOutputSinkId, setRealOutputSinkId] = useState<string | undefined>(undefined);
   const routerRtpCapabilities = useRef<RtpCapabilities | null>(null);
+  const deviceRef = useRef<InstanceType<typeof Device> | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const destinationRef = useRef<MediaStreamAudioDestinationNode | null>(null);
   const micSourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
@@ -483,11 +484,57 @@ const startMicStream = useCallback(async () => {
         logVoice('Screen share surface type', { displaySurface, hasAudio, isSystemAudio });
         setSharingSystemAudio(isSystemAudio);
 
+        // Set BEFORE produce() so the browser initialises its encoder with
+        // the right profile. 'motion' = framerate-optimised; if set after
+        // produce() the encoder has already locked in its configuration.
+        try { (videoTrack as any).contentHint = 'motion'; } catch { /* no-op */ }
+
+        const maxBitrateBps = (devices.screenVideoBitrate ?? 10000) * 1000;
+        // Start GCC close to the target bitrate so the ramp-up phase doesn't
+        // cause visible stutter at the beginning of every share session.
+        const startBitrateKbps = Math.round((devices.screenVideoBitrate ?? 10000) * 0.7);
+
+        // Prefer AV1 for screen sharing: it achieves the same quality at ~40%
+        // lower bitrate than H264 which leaves more headroom for the encoder to
+        // keep frame rate stable. Fall back to H264 then VP8 for older browsers.
+        const preferredMimeTypes = ['video/av1', 'video/h264', 'video/vp8'];
+        const deviceCodecs = deviceRef.current?.rtpCapabilities.codecs ?? [];
+        const screenCodec = preferredMimeTypes
+          .map(mime => deviceCodecs.find(c => c.mimeType.toLowerCase() === mime))
+          .find(Boolean);
+        logVoice('Screen share codec selected', { codec: screenCodec?.mimeType ?? 'default' });
+
         localScreenShareProducer.current =
           await producerTransport.current?.produce({
             track: videoTrack,
-            appData: { kind: StreamKind.SCREEN }
+            appData: { kind: StreamKind.SCREEN },
+            ...(screenCodec ? { codec: screenCodec } : {}),
+            encodings: [{
+              maxBitrate: maxBitrateBps,
+              maxFramerate: devices.screenFramerate,
+              // Screen share should win the transport scheduler over audio.
+              priority: 'high',
+              networkPriority: 'high'
+            }],
+            // codecOptions only apply to H264/VP8; harmless but ignored for AV1
+            codecOptions: {
+              videoGoogleStartBitrate: startBitrateKbps
+            }
           });
+
+        // Tell WebRTC to drop resolution rather than framerate when congested.
+        // Default ('balanced') drops FPS which feels like stutter; this keeps
+        // the frame rate stable and briefly softens the picture instead.
+        try {
+          const sender = (localScreenShareProducer.current as any)?._rtpSender as RTCRtpSender | undefined;
+          if (sender) {
+            const params = sender.getParameters();
+            params.encodings?.forEach((enc) => {
+              (enc as any).degradationPreference = 'maintain-framerate';
+            });
+            await sender.setParameters(params);
+          }
+        } catch { /* browser may not support degradationPreference — not critical */ }
 
         localScreenShareProducer.current?.on('@close', async () => {
           logVoice('Screen share producer closed');
@@ -694,6 +741,7 @@ const startMicStream = useCallback(async () => {
     setLocalAudioStream,
     devices.screenResolution,
     devices.screenFramerate,
+    devices.screenVideoBitrate,
     devices.screenAudioBitrate,
     devices.microphoneId
   ]);
@@ -803,6 +851,8 @@ const startMicStream = useCallback(async () => {
         await device.load({
           routerRtpCapabilities: incomingRouterRtpCapabilities
         });
+
+        deviceRef.current = device;
 
         await createProducerTransport(device);
         await createConsumerTransport(device);

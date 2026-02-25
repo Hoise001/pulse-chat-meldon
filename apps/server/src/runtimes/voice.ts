@@ -32,13 +32,22 @@ const voiceRuntimes = new Map<number, VoiceRuntime>();
 
 const defaultRouterOptions: RouterOptions<AppData> = {
   mediaCodecs: [
+    // AV1: best quality-per-bit for screen sharing — Chrome 90+ supports encode/decode.
+    // Listed first so it is offered first in SDP; browsers that don't support it
+    // negotiate down to H264 automatically.
+    {
+      kind: 'video',
+      mimeType: 'video/AV1',
+      clockRate: 90000,
+      parameters: {}
+    },
     {
       kind: 'video',
       mimeType: 'video/H264',
       clockRate: 90000,
       parameters: {
         'packetization-mode': 1,
-        'profile-level-id': '42e01f',
+        'profile-level-id': '640032',
         'level-asymmetry-allowed': 1,
         'x-google-start-bitrate': 1000
       }

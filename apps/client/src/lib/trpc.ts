@@ -23,6 +23,19 @@ let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
 let heartbeatInFlight = false;
 /** Set to true when the client intentionally closes the connection (sign-out). */
 let intentionalClose = false;
+/**
+ * Called on every WebSocket auto-reconnect to re-run handshake + joinServer.
+ * Registered by server/actions.ts after the initial connect so the auth
+ * sequence is replayed on the same (reconnected) WS client without creating
+ * a new one.
+ */
+let reauthCallback: (() => Promise<void>) | null = null;
+/** Prevents concurrent reauthCallback executions if onOpen fires multiple times. */
+let reauthInProgress = false;
+
+export const setReauthCallback = (cb: () => Promise<void>) => {
+  reauthCallback = cb;
+};
 
 const HEARTBEAT_MS = 25_000;
 
@@ -63,12 +76,48 @@ const initializeTRPC = (host: string) => {
   wsClient = createWSClient({
     url: `${protocol}://${host}`,
     onOpen: () => {
-      // createWSClient auto-reconnects internally; when the socket is back,
-      // immediately clear reconnect UI/state.
-      stopReconnecting();
-      setConnected(true);
-      setDisconnectInfo(undefined);
-      startHeartbeat();
+      stopHeartbeat();
+
+      const wasReconnecting = isCurrentlyReconnecting();
+
+      // Cancel the manual reconnect timer IMMEDIATELY — before any awaits.
+      // If we leave it running, reconnect.ts fires while reauthCallback is
+      // in flight and calls connectToTRPC(), creating a second wsClient and a
+      // second server context. The two contexts then race and the handshake
+      // hash from one is validated against the other → FORBIDDEN.
+      if (wasReconnecting) stopReconnecting();
+
+      if (wasReconnecting && reauthCallback) {
+        if (reauthInProgress) {
+          // A previous onOpen already started re-auth; this is a duplicate
+          // rapid-fire open event. Close this socket so onClose reschedules.
+          console.warn('[trpc/ws] re-auth already in progress, closing duplicate socket');
+          wsClient?.close();
+          return;
+        }
+
+        reauthInProgress = true;
+        reauthCallback()
+          .then(() => {
+            setConnected(true);
+            setDisconnectInfo(undefined);
+            startHeartbeat();
+          })
+          .catch((err) => {
+            console.warn('[trpc/ws] re-auth failed after auto-reconnect, closing to retry', err);
+            // Close the socket; onClose will call startReconnecting() again
+            // and schedule the next attempt with backoff.
+            wsClient?.close();
+          })
+          .finally(() => {
+            reauthInProgress = false;
+          });
+      } else {
+        // Initial connection — connect() in server/actions handles auth directly.
+        setConnected(true);
+        setDisconnectInfo(undefined);
+        startHeartbeat();
+      }
     },
     // @ts-expect-error - the onclose type is not correct in trpc
     onClose: (cause: CloseEvent) => {
@@ -181,6 +230,7 @@ const fullTeardown = () => {
 const cleanup = (signOut = false) => {
   stopReconnecting();
   intentionalClose = true;
+  reauthInProgress = false;
 
   if (wsClient) {
     wsClient.close();

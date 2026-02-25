@@ -1,6 +1,14 @@
 # Stage 1: Build
 FROM oven/bun:1.3.5 AS builder
 WORKDIR /app
+
+# Vite replaces import.meta.env.VITE_* at build time — they must be available
+# as real environment variables when `vite build` runs inside this stage.
+ARG VITE_SUPABASE_URL
+ARG VITE_SUPABASE_ANON_KEY
+ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL
+ENV VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY
+
 COPY . .
 RUN bun install
 RUN cd apps/server \

@@ -12,7 +12,7 @@ import { logDebug } from '@/helpers/browser-logger';
 import { getHostFromServer } from '@/helpers/get-file-url';
 import { applyServerPreferences } from '@/lib/preferences-apply';
 import { seedPreferencesFromLocalStorage } from '@/lib/preferences-seed';
-import { cleanup, connectToTRPC, getHomeTRPCClient } from '@/lib/trpc';
+import { cleanup, connectToTRPC, getHomeTRPCClient, setReauthCallback } from '@/lib/trpc';
 import { type TPublicServerSettings, type TServerInfo } from '@pulse/shared';
 import { store } from '../store';
 import { setPluginCommands } from './plugins/actions';
@@ -77,6 +77,18 @@ export const connect = async () => {
   const { handshakeHash } = await trpc.others.handshake.query();
 
   currentHandshakeHash = handshakeHash;
+
+  // Register re-auth callback so onOpen (tRPC auto-reconnect) can replay
+  // handshake + joinServer without creating a second WS connection.
+  setReauthCallback(async () => {
+    const reconnectTrpc = getHomeTRPCClient();
+    const { handshakeHash: newHash } = await reconnectTrpc.others.handshake.query();
+    currentHandshakeHash = newHash;
+    // Use the currently active server (from Redux) so the user lands back
+    // on the same server they were viewing before the disconnect.
+    const activeServerId = store.getState().app.activeServerId ?? getSavedActiveServerId();
+    await joinServer(newHash, activeServerId);
+  });
 
   // Restore last active server from localStorage
   const savedServerId = getSavedActiveServerId();
