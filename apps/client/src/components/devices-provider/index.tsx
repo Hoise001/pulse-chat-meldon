@@ -26,6 +26,7 @@ const DEFAULT_DEVICE_SETTINGS: TDeviceSettings = {
   shareSystemAudio: false,
   screenResolution: Resolution['720p'],
   screenFramerate: 30,
+  screenVideoBitrate: 10000,
   screenAudioBitrate: 128
 };
 

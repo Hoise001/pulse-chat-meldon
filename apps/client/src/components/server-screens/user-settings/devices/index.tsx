@@ -139,6 +139,29 @@ const Devices = memo(() => {
           />
 
           <div className="flex items-center gap-2">
+            <Group label="Video Bitrate">
+              <Select
+                value={(values.screenVideoBitrate ?? 10000).toString()}
+                onValueChange={(value) =>
+                  onChange('screenVideoBitrate', +value)
+                }
+              >
+                <SelectTrigger className="w-[160px]">
+                  <SelectValue placeholder="Video bitrate" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem value="3000">3 Mbps</SelectItem>
+                    <SelectItem value="5000">5 Mbps</SelectItem>
+                    <SelectItem value="8000">8 Mbps</SelectItem>
+                    <SelectItem value="10000">10 Mbps</SelectItem>
+                    <SelectItem value="15000">15 Mbps</SelectItem>
+                    <SelectItem value="20000">20 Mbps</SelectItem>
+                    <SelectItem value="30000">30 Mbps</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </Group>
             <Group label="Audio Bitrate">
               <Select
                 value={(values.screenAudioBitrate ?? 128).toString()}

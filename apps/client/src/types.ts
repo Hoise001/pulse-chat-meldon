@@ -45,6 +45,7 @@ export type TDeviceSettings = {
   shareSystemAudio: boolean;
   screenResolution: Resolution;
   screenFramerate: number;
+  screenVideoBitrate: number;
   screenAudioBitrate: number;
 };
 
