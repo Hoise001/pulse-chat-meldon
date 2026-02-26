@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button';
 import { useChannelCan } from '@/features/server/hooks';
 import { useCurrentVoiceChannelId } from '@/features/server/channels/hooks';
 import { useVoice } from '@/features/server/voice/hooks';
+import { useActiveServerId } from '@/features/app/hooks';
 import { ChannelPermission } from '@pulse/shared';
 import { Volume2 } from 'lucide-react';
 import { useEffect, useRef, useState, useCallback } from 'react';
@@ -19,13 +20,15 @@ export const Soundpad = () => {
   const voiceChannelId = useCurrentVoiceChannelId();
   const channelCan = useChannelCan(voiceChannelId);
   const { playSoundpadAudio } = useVoice();
+  const activeServerId = useActiveServerId();
 
   useEffect(() => {
-    fetch('/api/soundpad/list')
+    if (!activeServerId) return;
+    fetch(`/api/soundpad/list?serverId=${activeServerId}`)
       .then(r => r.json())
       .then(setSounds)
       .catch(() => setSounds([]));
-  }, []);
+  }, [activeServerId]);
 
   const handleOpen = useCallback(() => {
     if (buttonRef.current) {
@@ -37,13 +40,16 @@ export const Soundpad = () => {
 
   const playSound = async (file: string) => {
     if (audioRef.current) audioRef.current.pause();
-    const audio = new Audio(`/public/soundpad/${file}`);
+    const soundPath = activeServerId
+      ? `/public/soundpad/${activeServerId}/${file}`
+      : `/public/soundpad/${file}`;
+    const audio = new Audio(soundPath);
     audio.volume = 0.8;
     audio.play();
     audioRef.current = audio;
     setPlaying(file);
     audio.onended = () => setPlaying(null);
-    await playSoundpadAudio(file);
+    await playSoundpadAudio(file, activeServerId ?? undefined);
   };
 
   if (!channelCan(ChannelPermission.SOUNDPAD)) return null;

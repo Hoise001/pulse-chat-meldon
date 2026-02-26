@@ -13,7 +13,7 @@ export const useSoundpadStream = (
 ) => {
   const activeSourceRef = useRef<AudioBufferSourceNode | null>(null);
 
-  const playSoundpadAudio = useCallback(async (file: string) => {
+  const playSoundpadAudio = useCallback(async (file: string, serverId?: number) => {
     const ctx = audioContextRef.current;
     const destination = destinationRef.current;
     if (!ctx || !destination || ctx.state === 'closed') return;
@@ -25,7 +25,10 @@ export const useSoundpadStream = (
       activeSourceRef.current = null;
     }
 
-    const res = await fetch(`/public/soundpad/${file}`);
+    const soundPath = serverId
+      ? `/public/soundpad/${serverId}/${file}`
+      : `/public/soundpad/${file}`;
+    const res = await fetch(soundPath);
     const arrayBuffer = await res.arrayBuffer();
     const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
 

@@ -1,5 +1,6 @@
 import { ChannelType, DEFAULT_ROLE_PERMISSIONS, Permission } from '@pulse/shared';
 import { randomUUIDv7 } from 'bun';
+import { max, eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from '../../db';
 import {
@@ -50,11 +51,20 @@ const createServerRoute = protectedProcedure
 
       const serverId = newServer!.id;
 
+      // Calculate the next position for the creator's membership so that
+      // multi-server ordering in getServersByUserId remains deterministic.
+      const [posRow] = await tx
+        .select({ maxPos: max(serverMembers.position) })
+        .from(serverMembers)
+        .where(eq(serverMembers.userId, ctx.userId));
+      const nextPosition = (posRow?.maxPos ?? -1) + 1;
+
       // Add creator as member
       await tx.insert(serverMembers).values({
         serverId,
         userId: ctx.userId,
-        joinedAt: now
+        joinedAt: now,
+        position: nextPosition
       });
 
       // Create owner role for this server

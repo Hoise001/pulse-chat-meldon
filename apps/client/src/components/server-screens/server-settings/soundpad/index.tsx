@@ -2,6 +2,7 @@ import { getAccessToken } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useFilePicker } from '@/hooks/use-file-picker';
+import { useActiveServerId } from '@/features/app/hooks';
 import { Trash2, Upload, Volume2 } from 'lucide-react';
 import { memo, useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -12,16 +13,20 @@ const Soundpad = memo(() => {
   const [sounds, setSounds] = useState<Sound[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const openFilePicker = useFilePicker();
+  const activeServerId = useActiveServerId();
 
   const fetchSounds = useCallback(async () => {
     try {
-      const res = await fetch('/api/soundpad/list');
+      const url = activeServerId
+        ? `/api/soundpad/list?serverId=${activeServerId}`
+        : '/api/soundpad/list';
+      const res = await fetch(url);
       const data = await res.json();
       setSounds(data);
     } catch (e) {
       console.error('Failed to fetch sounds:', e);
     }
-  }, []);
+  }, [activeServerId]);
 
   useEffect(() => {
     fetchSounds();
@@ -41,6 +46,7 @@ const Soundpad = memo(() => {
           headers: {
             'x-token': token || '',
             'x-file-name': file.name,
+            'x-server-id': activeServerId ? String(activeServerId) : '',
             'Content-Type': file.type,
           },
           body: file,
@@ -56,12 +62,15 @@ const Soundpad = memo(() => {
     } finally {
       setIsUploading(false);
     }
-  }, [openFilePicker, fetchSounds]);
+  }, [openFilePicker, fetchSounds, activeServerId]);
 
   const deleteSound = useCallback(async (file: string) => {
     const token = await getAccessToken();
     try {
-      const res = await fetch(`/api/soundpad/delete?file=${encodeURIComponent(file)}`, {
+      const deleteUrl = activeServerId
+        ? `/api/soundpad/delete?file=${encodeURIComponent(file)}&serverId=${activeServerId}`
+        : `/api/soundpad/delete?file=${encodeURIComponent(file)}`;
+      const res = await fetch(deleteUrl, {
         method: 'DELETE',
         headers: {
           'x-token': token || '',
@@ -76,7 +85,7 @@ const Soundpad = memo(() => {
       console.error(e);
       toast.error('Failed to delete sound');
     }
-  }, [fetchSounds]);
+  }, [fetchSounds, activeServerId]);
 
   return (
     <div className="flex gap-6">
@@ -117,7 +126,12 @@ const Soundpad = memo(() => {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => new Audio(`/public/soundpad/${sound.file}`).play()}
+                    onClick={() => {
+                      const previewPath = activeServerId
+                        ? `/public/soundpad/${activeServerId}/${sound.file}`
+                        : `/public/soundpad/${sound.file}`;
+                      new Audio(previewPath).play();
+                    }}
                   >
                     Preview
                   </Button>

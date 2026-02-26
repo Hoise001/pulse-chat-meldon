@@ -57,7 +57,7 @@ export type TVoiceProvider = {
   connectionStatus: ConnectionStatus;
   transportStats: TransportStatsData;
   sharingSystemAudio: boolean;
-  playSoundpadAudio: (file: string) => Promise<void>;
+  playSoundpadAudio: (file: string, serverId?: number) => Promise<void>;
   realOutputSinkId: string | undefined;
   audioVideoRefsMap: Map<number, AudioVideoRefs>;
   getOrCreateRefs: (remoteId: number) => AudioVideoRefs;
@@ -512,6 +512,10 @@ const startMicStream = useCallback(async () => {
             encodings: [{
               maxBitrate: maxBitrateBps,
               maxFramerate: devices.screenFramerate,
+              // L1T1: single spatial + temporal layer. No temporal scalability
+              // means the encoder never halves/quarters the frame rate under
+              // load — every encoded frame is delivered.
+              scalabilityMode: 'L1T1',
               // Screen share should win the transport scheduler over audio.
               priority: 'high',
               networkPriority: 'high'

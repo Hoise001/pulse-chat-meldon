@@ -158,10 +158,10 @@ const createHttpServer = async (port: number = config.server.port) => {
               );
             }
           }
-          if (req.method === 'GET' && req.url === '/api/soundpad/list') {
+          if (req.method === 'GET' && req.url?.startsWith('/api/soundpad/list')) {
             return await soundpadListHandler(req, res);
           }
-          if (req.method === 'POST' && req.url === '/api/soundpad/upload') {
+          if (req.method === 'POST' && req.url?.startsWith('/api/soundpad/upload')) {
             return await soundpadUploadHandler(req, res);
           }
           if (req.method === 'DELETE' && req.url?.startsWith('/api/soundpad/delete')) {

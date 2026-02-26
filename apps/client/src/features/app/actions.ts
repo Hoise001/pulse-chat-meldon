@@ -82,9 +82,13 @@ export const switchServer = async (
   store.dispatch(appSliceActions.setActiveServerId(serverId));
   setActiveView('server');
 
-  // If the server data is already loaded (e.g. returning from Home view),
-  // skip re-joining — subscriptions and state are already active
-  if (app.activeServerId === serverId && !app.activeInstanceDomain) {
+  // If the server data is already loaded for this exact server (e.g. returning
+  // from Home view), skip re-joining — subscriptions and state are still active.
+  // Compare against publicSettings.id (the DB id of the currently loaded server)
+  // rather than the pre-dispatch app.activeServerId snapshot, which can be stale
+  // and cause the wrong server's data to remain on screen after a server switch.
+  const currentLoadedServerId = store.getState().server.publicSettings?.id;
+  if (currentLoadedServerId === serverId) {
     return;
   }
 
