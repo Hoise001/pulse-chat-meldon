@@ -3,7 +3,7 @@ import 'prosemirror-view/style/prosemirror.css';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Provider } from 'react-redux';
-
+import { ScreenPicker } from './components/screen-picker';
 import { StoreDebug } from './components/debug/store-debug.tsx';
 import { DevicesProvider } from './components/devices-provider/index.tsx';
 import { DialogsProvider } from './components/dialogs/index.tsx';
@@ -28,6 +28,7 @@ createRoot(document.getElementById('root')!).render(
           <DialogsProvider />
           <E2EESetupModal />
           <ServerScreensProvider />
+          <ScreenPicker />
           <Routing />
         </DevicesProvider>
       </Provider>
