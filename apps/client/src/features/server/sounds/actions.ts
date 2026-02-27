@@ -1,4 +1,22 @@
 import { SoundType } from '../types';
+
+/**
+ * The audio sink ID to route app sounds to during system audio capture.
+ * Set to 'communications' on Windows loopback or a specific device ID on
+ * macOS to keep notification/join/leave sounds off the default output device
+ * (which is being loopback-captured) and prevent them feeding back into the
+ * screen share audio stream.
+ */
+let activeSoundSinkId: string | undefined = undefined;
+
+/**
+ * Called by the VoiceProvider whenever the real output sink changes.
+ * Pass `undefined` to reset back to the browser default.
+ */
+export const setActiveSoundSinkId = (id: string | undefined): void => {
+  activeSoundSinkId = id;
+};
+
 /**
  * Mapping of Pulse-Chat events to your custom MP3 files.
  * Ensure these files are located in your /public/sounds/ folder.
@@ -31,10 +49,26 @@ export const playSound = (type: SoundType) => {
   }
   const audio = new Audio(filePath);
   audio.volume = GLOBAL_VOLUME;
-  audio.play().catch((error) => {
-    // This usually triggers if the user hasn't interacted with the UI yet
-    console.debug("Audio playback prevented:", error.message);
-  });
+
+  // During system audio capture / loopback, route sounds to the designated
+  // device (e.g. 'communications' on Windows, real output on macOS) so they
+  // don't end up on the default output being loopback-captured.
+  const sinkId = activeSoundSinkId;
+  if (sinkId && 'setSinkId' in audio) {
+    (audio as unknown as { setSinkId(id: string): Promise<void> })
+      .setSinkId(sinkId)
+      .then(() => audio.play())
+      .catch((err) => {
+        // setSinkId failed (device gone?) — fall back to default
+        audio.play().catch((e) => console.debug('Audio playback prevented:', e.message));
+        console.debug('setSinkId failed for sound:', (err as Error).message);
+      });
+  } else {
+    audio.play().catch((error) => {
+      // This usually triggers if the user hasn't interacted with the UI yet
+      console.debug("Audio playback prevented:", error.message);
+    });
+  }
 };
 /**
  * Plays a sound preview in the settings UI.

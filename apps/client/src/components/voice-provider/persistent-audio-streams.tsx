@@ -91,14 +91,28 @@ const RemoteScreenShareAudio = memo(
     const ownVoiceState = useOwnVoiceState();
     const { realOutputSinkId } = useVoice();
 
+    // Always-current ref so the audioStream effect can read the latest sinkId
+    // without listing it as a dependency (which would re-create the context
+    // on every routing change).
+    const sinkIdRef = useRef<string | undefined>(realOutputSinkId);
+    useEffect(() => {
+      sinkIdRef.current = realOutputSinkId;
+    }, [realOutputSinkId]);
+
     const volumeKey = getUserVolumeKey(userId);
     const volume = getVolume(volumeKey);
 
     // Create AudioContext and connect the stream
     useEffect(() => {
-      // Create context with playback latency hint to avoid ducking
+      // Create context with playback latency hint to avoid ducking.
+      // Pass sinkId in the constructor (Chrome 110+) so audio is routed to
+      // the correct device from the very first frame — no gap before setSinkId.
       if (!audioCtxRef.current || audioCtxRef.current.state === 'closed') {
-        audioCtxRef.current = new AudioContext({ latencyHint: 'playback' });
+        const currentSinkId = sinkIdRef.current;
+        audioCtxRef.current = new AudioContext({
+          latencyHint: 'playback',
+          ...(currentSinkId ? { sinkId: currentSinkId } : {})
+        } as AudioContextOptions);
         gainRef.current = audioCtxRef.current.createGain();
         gainRef.current.connect(audioCtxRef.current.destination);
       }
@@ -126,11 +140,15 @@ const RemoteScreenShareAudio = memo(
       };
     }, [audioStream]);
 
-    // Route to real output device during system audio capture
+    // Route to real output device during system audio capture.
+    // Also handles reset: when realOutputSinkId becomes undefined (share stopped),
+    // pass '' to revert the context back to the browser default output.
     useEffect(() => {
-      if (!audioCtxRef.current) return;
-      if (realOutputSinkId && 'setSinkId' in audioCtxRef.current) {
-        (audioCtxRef.current as unknown as { setSinkId(id: string): Promise<void> }).setSinkId(realOutputSinkId).catch(() => {});
+      if (!audioCtxRef.current || audioCtxRef.current.state === 'closed') return;
+      if ('setSinkId' in audioCtxRef.current) {
+        (audioCtxRef.current as unknown as { setSinkId(id: string): Promise<void> })
+          .setSinkId(realOutputSinkId ?? '')
+          .catch(() => {});
       }
     }, [realOutputSinkId]);
 

@@ -35,11 +35,14 @@ const defaultRouterOptions: RouterOptions<AppData> = {
     // AV1: best quality-per-bit for screen sharing — Chrome 90+ supports encode/decode.
     // Listed first so it is offered first in SDP; browsers that don't support it
     // negotiate down to H264 automatically.
+    // level-idx=13 → Level 6.1, which supports 4K@120fps in the AV1 spec.
     {
       kind: 'video',
       mimeType: 'video/AV1',
       clockRate: 90000,
-      parameters: {}
+      parameters: {
+        'level-idx': 13
+      }
     },
     {
       kind: 'video',
