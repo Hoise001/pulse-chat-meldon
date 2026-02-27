@@ -5,6 +5,14 @@ export const useKeyboardShortcuts = () => {
   const [shortcutsDialogOpen, setShortcutsDialogOpen] = useState(false);
   const voiceControls = useVoice();
 
+  // Desktop global hotkey (uiohook) — fires via IPC regardless of window focus.
+  useEffect(() => {
+    if (!window.pulseDesktop?.onToggleMute) return;
+    window.pulseDesktop.onToggleMute(() => {
+      voiceControls.toggleMic?.();
+    });
+  }, [voiceControls]);
+
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       // Ctrl+/ — toggle shortcuts dialog

@@ -1,0 +1,72 @@
+appId: com.pulse.desktop
+productName: MeldonCord
+copyright: Copyright © 2025 MeldonCord
+
+# Source
+directories:
+  output: out/dist
+  buildResources: assets
+
+# Files to include in the package
+files:
+  - dist/**
+  - assets/**
+  - "!src"
+  - "!scripts"
+  - "!native"
+  - "!tsconfig.json"
+  - "!forge.config.ts"
+  - "!electron-builder.yml"
+
+# Native .node addons must be outside asar
+asar: true
+asarUnpack:
+  - "**/*.node"
+  - "**/node_modules/uiohook-napi/**"
+
+# Extra resources (native addons, drivers)
+extraResources:
+  - from: native/win-process-audio/build/Release/win-process-audio.node
+    to: win-process-audio.node
+    filter:
+      - "**/*"
+
+# ── Windows ────────────────────────────────────────────────────────────────────
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+  icon: assets/icon.ico
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  installerIcon: assets/icon.ico
+  uninstallerIcon: assets/icon.ico
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  include: installer.nsh
+
+# ── macOS ──────────────────────────────────────────────────────────────────────
+mac:
+  target:
+    - target: dmg
+      arch: [arm64, x64]
+  category: public.app-category.social-networking
+  icon: assets/icon.icns
+  entitlements: entitlements.plist
+  entitlementsInherit: entitlements.plist
+  hardenedRuntime: true
+  gatekeeperAssess: false
+
+dmg:
+  format: ULFO
+
+# ── Linux ──────────────────────────────────────────────────────────────────────
+linux:
+  target:
+    - deb
+    - rpm
+  icon: assets/icon.png
+  category: Network
+  executableName: pulse-desktop
