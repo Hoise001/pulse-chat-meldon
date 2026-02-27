@@ -39,7 +39,7 @@ type Events = {
     userId: number;
   };
 
-  [ServerEvents.USER_JOIN]: TJoinedPublicUser;
+  [ServerEvents.USER_JOIN]: TJoinedPublicUser & { serverId: number };
   [ServerEvents.USER_LEAVE]: number;
   [ServerEvents.USER_CREATE]: TJoinedPublicUser;
   [ServerEvents.USER_UPDATE]: TJoinedPublicUser;

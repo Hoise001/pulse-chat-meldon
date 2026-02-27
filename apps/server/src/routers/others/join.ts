@@ -187,7 +187,10 @@ const joinServerRoute = t.procedure
 
     // Publish USER_JOIN to members of this server
     const memberIds = await getServerMemberIds(targetServer.id);
-    ctx.pubsub.publishFor(memberIds, ServerEvents.USER_JOIN, foundPublicUser);
+    ctx.pubsub.publishFor(memberIds, ServerEvents.USER_JOIN, {
+      ...foundPublicUser,
+      serverId: targetServer.id
+    });
 
     const connectionInfo = ctx.getConnectionInfo();
 

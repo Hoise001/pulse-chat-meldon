@@ -6,9 +6,11 @@ import { db } from '../../db';
 import { getDefaultRoleForServer } from '../../db/queries/roles';
 import {
   addServerMember,
+  getServerMemberIds,
   getServersByUserId,
   isServerMember
 } from '../../db/queries/servers';
+import { getPublicUserById } from '../../db/queries/users';
 import { servers, userRoles } from '../../db/schema';
 import { logger } from '../../logger';
 import { invariant } from '../../utils/invariant';
@@ -115,6 +117,17 @@ const joinFederatedRoute = protectedProcedure
       userId: ctx.userId,
       server: summary
     });
+
+    // Notify existing members so they see the new user in the member list
+    const memberIds = await getServerMemberIds(server.id);
+    const publicUser = await getPublicUserById(ctx.userId);
+    if (publicUser) {
+      ctx.pubsub.publishFor(
+        memberIds.filter((id) => id !== ctx.userId),
+        ServerEvents.USER_JOIN,
+        { ...publicUser, serverId: server.id }
+      );
+    }
 
     return summary;
   });

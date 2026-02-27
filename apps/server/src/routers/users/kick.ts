@@ -2,6 +2,7 @@ import { ActivityLogType, DisconnectCode, Permission, ServerEvents } from '@puls
 import z from 'zod';
 import { publishUser } from '../../db/publishers';
 import {
+  getServerMemberIds,
   isServerMember,
   removeServerMember
 } from '../../db/queries/servers';
@@ -38,6 +39,9 @@ const kickRoute = protectedProcedure
       }
     }
 
+    // Capture member list BEFORE removing so all current members are notified
+    const memberIds = await getServerMemberIds(ctx.activeServerId);
+
     // Remove the user from this server (same as leaving)
     await removeServerMember(ctx.activeServerId, input.userId);
 
@@ -47,13 +51,14 @@ const kickRoute = protectedProcedure
       reason: input.reason
     });
 
-    // Notify the kicked user to remove the server from their joined list
-    ctx.pubsub.publishFor(input.userId, ServerEvents.SERVER_MEMBER_LEAVE, {
+    // Notify ALL server members (including the kicked user) so they remove the
+    // user from the member list immediately without a page refresh.
+    ctx.pubsub.publishFor(memberIds, ServerEvents.SERVER_MEMBER_LEAVE, {
       serverId: ctx.activeServerId,
       userId: input.userId
     });
 
-    // Notify other members to remove the user from the member list
+    // Notify co-members on OTHER shared servers to update presence/status
     publishUser(input.userId, 'delete');
 
     enqueueActivityLog({

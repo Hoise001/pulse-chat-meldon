@@ -12,6 +12,7 @@ import { subscribeToEmojis } from './emojis/subscriptions';
 import { subscribeToMessages } from './messages/subscriptions';
 import { subscribeToPlugins } from './plugins/subscriptions';
 import { subscribeToRoles } from './roles/subscriptions';
+import { removeUser } from './users/actions';
 import { subscribeToUsers } from './users/subscriptions';
 import { subscribeToVoice } from './voice/subscriptions';
 
@@ -50,8 +51,16 @@ const subscribeToServer = () => {
   });
 
   const onMemberLeaveSub = trpc.servers.onMemberLeave.subscribe(undefined, {
-    onData: ({ serverId }: { serverId: number; userId: number }) => {
-      store.dispatch(appSliceActions.removeJoinedServer(serverId));
+    onData: ({ serverId, userId }: { serverId: number; userId: number }) => {
+      const state = store.getState();
+      const ownUserId = state.server.ownUserId;
+      if (userId === ownUserId) {
+        // This client is being removed from the server (kicked or left)
+        store.dispatch(appSliceActions.removeJoinedServer(serverId));
+      } else {
+        // Another member left/was kicked — remove them from the local member list
+        removeUser(userId);
+      }
     },
     onError: (err: unknown) =>
       console.error('onServerMemberLeave subscription error:', err)

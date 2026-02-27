@@ -126,7 +126,7 @@ const joinServerByInviteRoute = protectedProcedure
       ctx.pubsub.publishFor(
         memberIds.filter((id) => id !== ctx.userId),
         ServerEvents.USER_JOIN,
-        publicUser
+        { ...publicUser, serverId: server.id }
       );
     }
 

@@ -50,8 +50,9 @@ const subscribeToUsers = () => {
   const trpc = getTRPCClient();
 
   const onUserJoinSub = trpc.users.onJoin.subscribe(undefined, {
-    onData: (user: TJoinedPublicUser) => {
-      handleUserJoin(user);
+    onData: (payload: TJoinedPublicUser & { serverId: number }) => {
+      const { serverId, ...user } = payload;
+      handleUserJoin(user as TJoinedPublicUser, serverId);
       updateFriend(user.id, user);
 
       // Fire-and-forget: distribute sender keys to the newly online user

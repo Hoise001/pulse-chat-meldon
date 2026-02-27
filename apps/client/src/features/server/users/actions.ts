@@ -21,9 +21,17 @@ export const updateUser = (
   store.dispatch(serverSliceActions.updateUser({ userId, user }));
 };
 
-export const handleUserJoin = (user: TJoinedPublicUser) => {
-  // Only update users already in the current server's member list.
-  // Never add — USER_JOIN fires for all co-members across servers,
-  // so adding would create ghost entries when viewing a different server.
+export const handleUserJoin = (
+  user: TJoinedPublicUser,
+  serverId: number
+) => {
+  // If this USER_JOIN is scoped to the current active server, ensure the user
+  // is present in the member list. This covers both the "new member joined"
+  // case (addUser is a no-op if they already exist) and the "existing member
+  // came online" case (updateUser refreshes their status).
+  const state = store.getState();
+  if (state.app.activeServerId === serverId) {
+    addUser(user);
+  }
   updateUser(user.id, user);
 };
