@@ -1,6 +1,22 @@
 /// <reference types="vite/client" />
 /// <reference types="zzfx" />
 
+// Allow <webview> JSX in Electron renderer
+declare namespace React {
+  namespace JSX {
+    interface IntrinsicElements {
+      webview: React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement> & {
+        src?: string;
+        allowpopups?: string;
+        partition?: string;
+        useragent?: string;
+        disablewebsecurity?: string;
+        ref?: React.Ref<HTMLElement>;
+      };
+    }
+  }
+}
+
 // Pulse Desktop (Electron) bridge API
 interface PulseDesktopAudioDriver {
   getStatus(): Promise<{ supported: boolean; fileInstalled: boolean; active: boolean }>;
@@ -50,6 +66,8 @@ interface PulseDesktop {
   screenPicker?: PulseDesktopScreenPicker;
   /** Windows only — WASAPI process loopback capture for screen sharing. */
   winProcessAudio?: PulseDesktopWinProcessAudio;
+  /** Desktop global-hotkey event — register a callback to toggle mic. */
+  onToggleMute?(cb: () => void): void;
 }
 
 // Extend the Window interface for global functions

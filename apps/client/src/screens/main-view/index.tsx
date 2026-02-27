@@ -9,8 +9,10 @@ import { PersistentAudioStreams } from '@/components/voice-provider/persistent-a
 import { useAutoAway } from '@/hooks/use-auto-away';
 import { useKeyboardShortcuts } from '@/hooks/use-keyboard-shortcuts';
 import { useTabNotifications } from '@/hooks/use-tab-notifications';
+import { cn } from '@/lib/utils';
 import { memo } from 'react';
 import { DiscoverView } from '../discover-view';
+import { FoundryView } from '../foundry-view';
 import { HomeView } from '../home-view';
 import { ServerView } from '../server-view';
 
@@ -29,6 +31,8 @@ const MainViewInner = memo(() => {
         return <DiscoverView />;
       case 'server':
         return <ServerView />;
+      case 'foundry':
+        return null; // rendered persistently below
     }
   };
 
@@ -40,10 +44,27 @@ const MainViewInner = memo(() => {
           <ServerStrip />
         </div>
         <div className="flex flex-1 flex-col overflow-hidden">
-          {renderView()}
-          <MobileBottomNav />
+          {/* Non-foundry views are conditionally rendered */}
+          <div
+            className={cn(
+              'flex flex-1 flex-col overflow-hidden',
+              activeView === 'foundry' && 'hidden'
+            )}
+          >
+            {activeView !== 'foundry' && renderView()}
+            <MobileBottomNav />
+          </div>
+          {/* FoundryView is always mounted so the iframe never reloads */}
+          <div
+            className={cn(
+              'flex-1 overflow-hidden',
+              activeView === 'foundry' ? 'flex' : 'hidden'
+            )}
+          >
+            <FoundryView />
+          </div>
         </div>
-        {activeView !== 'discover' && (
+        {activeView !== 'discover' && activeView !== 'foundry' && (
           <div className="hidden md:block fixed bottom-6 left-2 z-20 w-[calc(72px+15rem-0.5rem)] rounded-xl bg-card border border-border overflow-hidden shadow-lg">
             <VoiceControl />
             <UserControl />

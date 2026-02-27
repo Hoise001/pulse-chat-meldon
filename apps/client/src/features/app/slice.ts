@@ -2,7 +2,7 @@ import type { TDevices } from '@/types';
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import type { TServerSummary } from '@pulse/shared';
 
-export type TActiveView = 'home' | 'server' | 'discover';
+export type TActiveView = 'home' | 'server' | 'discover' | 'foundry';
 
 export type TFederatedServerEntry = {
   instanceDomain: string;

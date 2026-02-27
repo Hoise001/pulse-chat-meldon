@@ -171,6 +171,53 @@ const createHttpServer = async (port: number = config.server.port) => {
             return await publicRouteHandler(req, res);
           }
 
+          // Foundry status proxy — fetches HTTP Foundry /api/status server-side
+          // so the browser doesn't hit mixed-content restrictions.
+          if (req.method === 'GET' && req.url?.startsWith('/api/foundry-status')) {
+            const rawUrl = new URL(req.url, 'http://localhost').searchParams.get('url');
+            if (!rawUrl) {
+              res.writeHead(400, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ error: 'Missing url parameter' }));
+              return;
+            }
+            let targetUrl: string;
+            try {
+              const parsed = new URL(rawUrl);
+              let pathname = parsed.pathname.replace(/\/+$/, '');
+              pathname = pathname.replace(/\/(game|join|setup)$/, '');
+              const base = new URL(
+                (pathname || '/').endsWith('/') ? (pathname || '/') : `${pathname}/`,
+                parsed.origin
+              );
+              targetUrl = new URL('api/status', base).toString();
+            } catch {
+              res.writeHead(400, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ error: 'Invalid url parameter' }));
+              return;
+            }
+            try {
+              const controller = new AbortController();
+              const timeout = setTimeout(() => controller.abort(), 8000);
+              const upstream = await fetch(targetUrl, {
+                headers: { Accept: 'application/json' },
+                signal: controller.signal
+              });
+              clearTimeout(timeout);
+              if (!upstream.ok) {
+                res.writeHead(502, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'Upstream not ok', status: upstream.status }));
+                return;
+              }
+              const data = await upstream.json();
+              res.writeHead(200, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify(data));
+            } catch {
+              res.writeHead(503, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ error: 'Upstream unreachable' }));
+            }
+            return;
+          }
+
           if (req.method === 'GET' && req.url?.startsWith('/')) {
             return await interfaceRouteHandler(req, res);
           }

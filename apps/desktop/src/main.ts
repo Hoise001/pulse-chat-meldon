@@ -1,16 +1,174 @@
-import { app, BrowserWindow, ipcMain, shell, net, Menu } from 'electron';
+import { app, BrowserWindow, ipcMain, shell, net, Menu, globalShortcut } from 'electron';
 import path from 'path';
+import fs from 'fs';
 import { Store } from './lib/store';
 import { loadWindowState, trackWindowState } from './lib/window-state';
-import { setupPermissions, requestMediaAccess } from './lib/permissions';
-import { createTray, destroyTray } from './lib/tray';
+import { setupPermissions, requestMediaAccess, consumePendingProcessAudioSourceId } from './lib/permissions';
+import { createTray, destroyTray, setTrayIcon } from './lib/tray';
 import { APP_NAME, PRELOAD_PATH, SERVER_SELECTOR_PATH } from './lib/constants';
 import { getDriverStatus, installDriver, uninstallDriver } from './lib/audio-driver';
 import { canCaptureSystemAudio, startSystemAudioCapture, stopSystemAudioCapture } from './lib/audio-capture';
+import { canCaptureProcessAudio, startProcessAudioCapture, stopProcessAudioCapture } from './lib/win-process-audio';
 
 const store = new Store();
 let mainWindow: BrowserWindow | null = null;
 let isQuitting = false;
+let hotkeyWin: BrowserWindow | null = null;
+let muteBinding: string[] | null = null;
+let uIOhook: any = null;
+const heldKeys = new Set<string>();
+
+// ── Settings persistence ─────────────────────────────────────────────────────
+const settingsPath = path.join(app.getPath('userData'), 'pulse-settings.json');
+
+function loadSettingsFile(): Record<string, any> {
+  try {
+    if (fs.existsSync(settingsPath)) return JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+  } catch {}
+  return {};
+}
+
+function saveSettingsFile(data: Record<string, any>) {
+  try {
+    fs.writeFileSync(settingsPath, JSON.stringify({ ...loadSettingsFile(), ...data }, null, 2));
+  } catch (e) {
+    console.error('[Pulse] Failed to save settings:', e);
+  }
+}
+
+function loadBindings() {
+  const s = loadSettingsFile();
+  muteBinding = s.bindings?.mute ?? null;
+}
+
+// ── Hotkey / uIOhook ─────────────────────────────────────────────────────────
+function buildKeycodeMap(UiohookKey: Record<string, any>): Record<number, string> {
+  const RENAMES: Record<string, string> = {
+    'Ctrl': 'Control', 'CtrlRight': 'Control', 'ShiftRight': 'Shift',
+    'Alt': 'Alt', 'AltRight': 'Alt', 'Meta': 'Super', 'MetaRight': 'Super',
+    'Enter': 'Return', 'ArrowLeft': 'Left', 'ArrowRight': 'Right',
+    'ArrowUp': 'Up', 'ArrowDown': 'Down',
+  };
+
+  // uiohook-napi names letter keys "KeyA"…"KeyZ" and digit keys "Digit0"…"Digit9".
+  // hotkeys.html normalizeKey() saves them as bare letters/digits ("A", "1").
+  // Strip the prefix so both sides agree.
+  function normalizeName(name: string): string {
+    if (RENAMES[name]) return RENAMES[name];
+    if (/^Key[A-Z]$/.test(name)) return name.slice(3);       // "KeyM" → "M"
+    if (/^Digit\d$/.test(name)) return name.slice(5);        // "Digit1" → "1"
+    if (/^Numpad\d$/.test(name)) return name.slice(6);       // "Numpad1" → "1" (same as Digit)
+    return name;
+  }
+
+  const map: Record<number, string> = {};
+  for (const [name, code] of Object.entries(UiohookKey)) {
+    if (!isNaN(Number(name))) continue;
+    map[code as number] = normalizeName(name);
+  }
+  return map;
+}
+
+function comboMatchesHeld(combo: string[]): boolean {
+  if (!combo || combo.length === 0) return false;
+  return combo.every(k => heldKeys.has(k)) && heldKeys.size === combo.length;
+}
+
+function clickMuteButton() {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  // Dispatch Ctrl+Shift+M via executeJavaScript — this works even when the
+  // window lacks OS focus, unlike sendInputEvent. The client's
+  // use-keyboard-shortcuts.ts handles this combo and calls toggleMic().
+  mainWindow.webContents.executeJavaScript(`
+    window.dispatchEvent(new KeyboardEvent('keydown', {
+      key: 'm', code: 'KeyM', ctrlKey: true, shiftKey: true,
+      bubbles: true, cancelable: true
+    }));
+  `).catch(() => {});
+
+  setTimeout(() => {
+    checkVoiceState().then(state => {
+      if (state === 'not-in-voice') setTrayIcon('default');
+      else if (state === 'muted') setTrayIcon('muted');
+      else setTrayIcon('normal');
+    });
+  }, 50);
+}
+
+function startUIOhook() {
+  try {
+    const uiohookNapi = require('uiohook-napi');
+    uIOhook = uiohookNapi;
+    const KEYCODE_TO_NAME = buildKeycodeMap(uiohookNapi.UiohookKey);
+    const F8_CODE = uiohookNapi.UiohookKey.F8;
+
+    uIOhook.uIOhook.on('keydown', (e: any) => {
+      const name = KEYCODE_TO_NAME[e.keycode];
+      if (!name || e.keycode === F8_CODE) return;
+      heldKeys.add(name);
+      console.log('[hotkey] held:', [...heldKeys], '| binding:', muteBinding);
+      if (muteBinding && comboMatchesHeld(muteBinding)) {
+        clickMuteButton();
+      }
+    });
+
+    uIOhook.uIOhook.on('keyup', (e: any) => {
+      const name = KEYCODE_TO_NAME[e.keycode];
+      if (name) heldKeys.delete(name);
+    });
+
+    uIOhook.uIOhook.start();
+    console.log('[Pulse] uIOhook started');
+  } catch (e: any) {
+    console.warn('[Pulse] uiohook-napi not available:', e.message);
+  }
+}
+
+// ── Voice state polling ───────────────────────────────────────────────────────
+function checkVoiceState(): Promise<string> {
+  if (!mainWindow || mainWindow.isDestroyed()) return Promise.resolve('not-in-voice');
+  return mainWindow.webContents.executeJavaScript(`
+    (function() {
+      const voiceIndicator = Array.from(document.querySelectorAll('span'))
+        .find(el => el.textContent.trim() === 'Voice connected');
+      if (!voiceIndicator) return 'not-in-voice';
+      const isMuted = !!Array.from(document.querySelectorAll('button[title]')).find(b =>
+        b.title.toLowerCase().includes('unmute microphone')
+      );
+      return isMuted ? 'muted' : 'unmuted';
+    })();
+  `).catch(() => 'not-in-voice');
+}
+
+function startVoicePolling() {
+  setInterval(async () => {
+    const state = await checkVoiceState();
+    if (state === 'not-in-voice') setTrayIcon('default');
+    else if (state === 'muted') setTrayIcon('muted');
+    else setTrayIcon('normal');
+  }, 500);
+}
+
+// ── Hotkey settings window ────────────────────────────────────────────────────
+function openHotkeySettings() {
+  if (hotkeyWin && !hotkeyWin.isDestroyed()) { hotkeyWin.focus(); return; }
+  hotkeyWin = new BrowserWindow({
+    width: 420,
+    height: 380,
+    title: 'Hotkey Settings',
+    resizable: false,
+    parent: mainWindow ?? undefined,
+    modal: false,
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+      preload: path.join(__dirname, 'hotkeys-preload.js'),
+    }
+  });
+  hotkeyWin.setMenuBarVisibility(false);
+  hotkeyWin.loadFile(path.join(__dirname, '..', 'assets', 'hotkeys.html'));
+  hotkeyWin.on('closed', () => { hotkeyWin = null; });
+}
 
 function disconnectServer(): void {
   store.delete('serverUrl');
@@ -39,6 +197,7 @@ function createWindow(): BrowserWindow {
       contextIsolation: true,
       nodeIntegration: false,
       autoplayPolicy: 'no-user-gesture-required',
+      webviewTag: true,
     },
     icon: path.join(__dirname, '..', 'assets', 'icon.png'),
   });
@@ -56,7 +215,7 @@ function createWindow(): BrowserWindow {
   trackWindowState(win, store);
 
   // Setup media permissions
-  setupPermissions(win.webContents.session);
+  setupPermissions(win.webContents.session, win);
 
   // Handle external links — open in default browser
   win.webContents.setWindowOpenHandler(({ url }) => {
@@ -171,14 +330,39 @@ function setupIpcHandlers(): void {
   ipcMain.handle('audio-capture:stop', () => {
     stopSystemAudioCapture();
   });
+
+  // Windows process-loopback audio capture (Win10 build 20348 / Win11+)
+  ipcMain.handle('win-process-audio:can-capture', () => canCaptureProcessAudio());
+  ipcMain.handle('win-process-audio:get-pending-source', () => consumePendingProcessAudioSourceId());
+  ipcMain.handle('win-process-audio:start', async (event, sourceId: string) => {
+    if (!mainWindow || mainWindow.isDestroyed()) return null;
+    const result = await startProcessAudioCapture(sourceId, event.sender);
+    return result; // { sampleRate, channels } or null
+  });
+  ipcMain.handle('win-process-audio:stop', () => {
+    stopProcessAudioCapture();
+  });
+
+  // Hotkey settings
+  ipcMain.handle('hotkeys-get', () => ({ mute: muteBinding }));
+  ipcMain.on('hotkeys-save', (_event, newBindings) => {
+    muteBinding = newBindings.mute ?? null;
+    saveSettingsFile({ bindings: { mute: muteBinding } });
+    if (hotkeyWin && !hotkeyWin.isDestroyed()) hotkeyWin.close();
+  });
+  ipcMain.on('hotkeys-cancel', () => {
+    if (hotkeyWin && !hotkeyWin.isDestroyed()) hotkeyWin.close();
+  });
 }
 
 // App lifecycle
 app.on('before-quit', () => {
   isQuitting = true;
   destroyTray();
-  // Ensure audio capture is cleaned up (restore default output device)
   stopSystemAudioCapture();
+  stopProcessAudioCapture();
+  globalShortcut.unregisterAll();
+  if (uIOhook) try { uIOhook.uIOhook.stop(); } catch {}
 });
 
 app.whenReady().then(async () => {
@@ -206,8 +390,12 @@ app.whenReady().then(async () => {
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
 
   setupIpcHandlers();
+  loadBindings();
+  startUIOhook();
+  globalShortcut.register('F8', openHotkeySettings);
   mainWindow = createWindow();
-  createTray(mainWindow, store, disconnectServer);
+  createTray(mainWindow, store, disconnectServer, openHotkeySettings);
+  startVoicePolling();
 
   app.on('activate', () => {
     // macOS: re-create window when dock icon clicked

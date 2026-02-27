@@ -287,6 +287,10 @@ const ServerStrip = memo(() => {
     setActiveView('discover');
   }, []);
 
+  const handleFoundryClick = useCallback(() => {
+    setActiveView('foundry');
+  }, []);
+
   const handleServerClick = useCallback(
     (serverId: number) => {
       const hash = getHandshakeHash();
@@ -665,6 +669,27 @@ const ServerStrip = memo(() => {
           title="Discover Servers"
         >
           <Compass className="h-6 w-6" />
+        </button>
+      </div>
+
+      <div className="mx-2 h-0.5 w-8 bg-border" />
+
+      <div className="relative flex w-full items-center justify-center group">
+        <div className={cn(
+          'absolute -left-0.5 w-1.5 rounded-full bg-primary transition-all duration-200',
+          activeView === 'foundry' ? 'h-10' : 'h-0 group-hover:h-5'
+        )} />
+        <button
+          onClick={handleFoundryClick}
+          className={cn(
+            'flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl p-0 transition-all duration-200 outline-none',
+            activeView === 'foundry'
+              ? 'rounded-xl ring-2 ring-primary'
+              : 'hover:rounded-xl hover:ring-2 hover:ring-primary'
+          )}
+          title="FoundryVTT"
+        >
+          <img src="/foundry_icon.png" className="h-full w-full object-cover" alt="FoundryVTT" />
         </button>
       </div>
 
