@@ -10,7 +10,7 @@ ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL
 ENV VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY
 
 COPY . .
-RUN bun install
+RUN ELECTRON_SKIP_BINARY_DOWNLOAD=1 bun install
 RUN cd apps/server \
     && bun run /app/docker/patch-migrations.ts ./src/db/migrations
 RUN cd apps/server && bun run build/build.ts --target linux-x64

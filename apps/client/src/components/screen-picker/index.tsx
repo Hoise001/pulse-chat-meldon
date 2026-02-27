@@ -152,7 +152,9 @@ const ScreenPicker = () => {
               checked={audio}
               onChange={(e) => setAudio(e.target.checked)}
             />
-            Share system audio
+            {selectedId?.startsWith('window:')
+              ? 'Share app audio only'
+              : 'Share all system audio (includes voice chat)'}
           </label>
         )}
 

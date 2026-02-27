@@ -1,5 +1,5 @@
 import { useCurrentVoiceChannelId } from '@/features/server/channels/hooks';
-import { playSound } from '@/features/server/sounds/actions';
+import { playSound, setActiveSoundSinkId } from '@/features/server/sounds/actions';
 import { useSoundpadStream } from './hooks/use-soundpad-stream';
 import { SoundType } from '@/features/server/types';
 import { logVoice } from '@/helpers/browser-logger';
@@ -20,6 +20,7 @@ import {
 import { useDevices } from '../devices-provider/hooks/use-devices';
 import type { TDeviceSettings } from '@/types';
 import { FloatingPinnedCard } from './floating-pinned-card';
+import { WinProcessAudioStream } from '@/lib/win-process-audio-stream';
 import { useLocalStreams } from './hooks/use-local-streams';
 import { useRemoteStreams } from './hooks/use-remote-streams';
 import {
@@ -132,12 +133,21 @@ const VoiceProvider = memo(({ children }: TVoiceProviderProps) => {
   const [sharingSystemAudio, setSharingSystemAudio] = useState(false);
   const [realOutputSinkId, setRealOutputSinkId] = useState<string | undefined>(undefined);
   const routerRtpCapabilities = useRef<RtpCapabilities | null>(null);
+
+  // Keep the sounds module in sync so playSound() routes to the correct output
+  // device during system audio capture (prevents join/leave/mute sounds from
+  // bleeding into the loopback stream).
+  useEffect(() => {
+    setActiveSoundSinkId(realOutputSinkId);
+    return () => { setActiveSoundSinkId(undefined); };
+  }, [realOutputSinkId]);
   const deviceRef = useRef<InstanceType<typeof Device> | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const destinationRef = useRef<MediaStreamAudioDestinationNode | null>(null);
   const micSourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
   const micGainRef = useRef<GainNode | null>(null);
   const micMutedRef = useRef(false);
+  const winProcessAudioStreamRef = useRef<WinProcessAudioStream | null>(null);
   const audioVideoRefsMap = useRef<Map<number, AudioVideoRefs>>(new Map());
   const { devices } = useDevices();
   const ownVoiceStateForRef = useSelector(ownVoiceStateSelector);
@@ -413,11 +423,19 @@ const startMicStream = useCallback(async () => {
     // Stop macOS system audio capture if active
     window.pulseDesktop?.audioCapture?.stop();
 
+    // Stop Windows process-loopback audio capture if active
+    if (winProcessAudioStreamRef.current) {
+      winProcessAudioStreamRef.current.stop();
+      winProcessAudioStreamRef.current = null;
+    }
+    window.pulseDesktop?.winProcessAudio?.stop();
+
     // Restore the microphone to original settings (echo cancellation was
-    // forced ON during system audio capture to prevent acoustic bleed)
+    // forced ON during system audio capture to prevent acoustic bleed —
+    // applies to both macOS virtual-device capture and Windows loopback).
     if (sharingSystemAudio && localAudioProducer.current && !localAudioProducer.current.closed) {
       try {
-        logVoice('macOS: Restoring mic to original settings');
+        logVoice('Restoring mic to original settings after system audio capture');
         const newMicStream = await navigator.mediaDevices.getUserMedia({
           audio: {
             deviceId: devices.microphoneId
@@ -437,10 +455,10 @@ const startMicStream = useCallback(async () => {
           await localAudioProducer.current.replaceTrack({ track: newMicTrack });
           localAudioStream?.getAudioTracks().forEach((t) => t.stop());
           setLocalAudioStream(newMicStream);
-          logVoice('macOS: Mic restored to original settings');
+          logVoice('Mic restored to original settings');
         }
       } catch (err) {
-        logVoice('macOS: Failed to restore mic settings', { error: err });
+        logVoice('Failed to restore mic settings', { error: err });
       }
     }
 
@@ -677,6 +695,90 @@ const startMicStream = useCallback(async () => {
           }
         }
 
+        // Windows audio capture
+        if (window.pulseDesktop?.platform === 'win32') {
+          // Check if the screen picker set a pending process-audio source ID.
+          // This is set only when the user picked a *window* source with audio —
+          // in that case the main process skipped loopback so we can use the
+          // cleaner WASAPI Process Loopback path (captures one app, no bleed).
+          const pendingSourceId = await window.pulseDesktop.winProcessAudio?.getPendingSource?.() ?? null;
+
+          if (pendingSourceId && window.pulseDesktop.winProcessAudio) {
+            // ── Process loopback path (window source, Win10 build 20348+) ────
+            logVoice('Windows: Starting WASAPI process loopback', { sourceId: pendingSourceId });
+            try {
+              // start() waits until the first audio packet arrives and returns
+              // the format — no race condition with chunk listeners.
+              const format = await window.pulseDesktop.winProcessAudio.start(pendingSourceId);
+              if (format) {
+                // Ensure the shared AudioContext is initialised
+                if (!audioContextRef.current) {
+                  const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+                  audioContextRef.current = new AudioContextClass();
+                  destinationRef.current = audioContextRef.current.createMediaStreamDestination();
+                }
+
+                const processStream = new WinProcessAudioStream(audioContextRef.current);
+                winProcessAudioStreamRef.current = processStream;
+                // Worklet is set up with the known channel count; chunk listener
+                // registered here — no race since start() already resolved.
+                const processTrack = await processStream.start(format.channels);
+                audioTrack = processTrack;
+                stream.addTrack(audioTrack);
+                setSharingSystemAudio(true);
+                logVoice('Windows: Process loopback audio track obtained', format);
+              } else {
+                logVoice('Windows: Process loopback start returned null — no audio shared');
+              }
+            } catch (err) {
+              console.error('[win-audio] WinProcessAudioStream.start() threw:', err);
+              logVoice('Windows: Process loopback failed', { error: err });
+              winProcessAudioStreamRef.current?.stop();
+              winProcessAudioStreamRef.current = null;
+              window.pulseDesktop.winProcessAudio.stop();
+            }
+          } else if (audioTrack) {
+            // ── Full loopback path (entire screen source) ─────────────────────
+            // Route voice-chat <audio> elements to the "communications" device
+            // so they are NOT captured by the WASAPI loopback. Electron loopback
+            // captures from the OS "Default" (console) endpoint; the
+            // "communications" endpoint is a separate render path even when both
+            // point at the same physical device.
+            logVoice('Windows: Full loopback — routing voice chat to "communications" device');
+            setRealOutputSinkId('communications');
+            setSharingSystemAudio(true);
+
+            if (localAudioProducer.current && !localAudioProducer.current.closed) {
+              try {
+                logVoice('Windows: Re-acquiring mic with echo cancellation to suppress acoustic bleed');
+                const newMicStream = await navigator.mediaDevices.getUserMedia({
+                  audio: {
+                    deviceId: devices.microphoneId
+                      ? { exact: devices.microphoneId }
+                      : undefined,
+                    autoGainControl: true,
+                    echoCancellation: true,
+                    noiseSuppression: true,
+                    sampleRate: 48000,
+                    channelCount: 2
+                  },
+                  video: false
+                });
+
+                const newMicTrack = newMicStream.getAudioTracks()[0];
+                if (newMicTrack) {
+                  await localAudioProducer.current.replaceTrack({ track: newMicTrack });
+                  localAudioStream?.getAudioTracks().forEach((t) => t.stop());
+                  setLocalAudioStream(newMicStream);
+                  logVoice('Windows: Mic re-acquired with echo cancellation');
+                }
+              } catch (micErr) {
+                logVoice('Windows: Failed to re-acquire mic with echo cancellation', { error: micErr });
+              }
+            }
+          }
+        }
+
         if (audioTrack) {
           logVoice('Obtained screen share audio track', { audioTrack });
 
@@ -722,6 +824,13 @@ const startMicStream = useCallback(async () => {
           // Stop macOS system audio capture if active
           window.pulseDesktop?.audioCapture?.stop();
 
+          // Stop Windows process-loopback if active
+          if (winProcessAudioStreamRef.current) {
+            winProcessAudioStreamRef.current.stop();
+            winProcessAudioStreamRef.current = null;
+          }
+          window.pulseDesktop?.winProcessAudio?.stop();
+
           setLocalScreenShare(undefined);
           setRealOutputSinkId(undefined);
         };
@@ -747,7 +856,10 @@ const startMicStream = useCallback(async () => {
     devices.screenFramerate,
     devices.screenVideoBitrate,
     devices.screenAudioBitrate,
-    devices.microphoneId
+    devices.microphoneId,
+    devices.autoGainControl,
+    devices.echoCancellation,
+    devices.noiseSuppression
   ]);
 
   // Hot-swap microphone track on the existing producer when device settings change

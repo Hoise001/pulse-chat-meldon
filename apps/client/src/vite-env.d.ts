@@ -14,6 +14,29 @@ interface PulseDesktopAudioCapture {
   stop(): Promise<void>;
 }
 
+interface DesktopCapturerSourceSerialized {
+  id: string;
+  name: string;
+  thumbnail: string | { toDataURL(): string };
+}
+
+interface PulseDesktopScreenPicker {
+  onShow(callback: (sources: DesktopCapturerSourceSerialized[]) => void): void;
+  select(sourceId: string, audio: boolean): Promise<void>;
+  cancel(): Promise<void>;
+  getSources(): Promise<DesktopCapturerSourceSerialized[]>;
+}
+
+/** Windows process-loopback audio capture (Win10 build 20348 / Win11+). */
+interface PulseDesktopWinProcessAudio {
+  canCapture(): Promise<boolean>;
+  getPendingSource(): Promise<string | null>;
+  start(sourceId: string): Promise<{ sampleRate: number; channels: number } | null>;
+  stop(): Promise<void>;
+  onChunk(callback: (buffer: ArrayBuffer, sampleRate: number, channels: number) => void): void;
+  offChunk(): void;
+}
+
 interface PulseDesktop {
   isElectron: true;
   platform: string;
@@ -23,6 +46,10 @@ interface PulseDesktop {
   updateSetting(key: string, value: unknown): Promise<void>;
   audioDriver: PulseDesktopAudioDriver;
   audioCapture: PulseDesktopAudioCapture;
+  /** Windows only — custom screen/window picker with system-audio toggle. */
+  screenPicker?: PulseDesktopScreenPicker;
+  /** Windows only — WASAPI process loopback capture for screen sharing. */
+  winProcessAudio?: PulseDesktopWinProcessAudio;
 }
 
 // Extend the Window interface for global functions
