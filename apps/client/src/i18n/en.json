@@ -1,0 +1,1659 @@
+{
+  "common": {
+    "save": "Save Changes",
+    "cancel": "Cancel",
+    "close": "Close",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "confirm": "Confirm",
+    "back": "Go back",
+    "loading": "Loading...",
+    "or": "or",
+    "unknown": "Unknown",
+    "noData": "No data",
+    "status": {
+      "online": "Online",
+      "idle": "Idle",
+      "dnd": "Do Not Disturb",
+      "invisible": "Invisible",
+      "offline": "Offline"
+    }
+  },
+
+  "auth": {
+    "tabs": {
+      "signIn": "Sign In",
+      "createAccount": "Create Account"
+    },
+    "fields": {
+      "email": "Email",
+      "emailPlaceholder": "you@example.com",
+      "password": "Password",
+      "passwordPlaceholder": "Enter your password",
+      "displayName": "Display Name",
+      "displayNamePlaceholder": "How others will see you",
+      "displayNameHint": "At least 4 characters",
+      "rememberMe": "Remember me"
+    },
+    "buttons": {
+      "signIn": "Sign In",
+      "createAccount": "Create Account"
+    },
+    "branding": {
+      "appName": "Pulse Chat",
+      "tagline": "Pulse keeps things simple — fast voice, structured text, and a focus on stability.",
+      "subtitle": "No distractions. No bloat. Just connection."
+    },
+    "warnings": {
+      "insecureTitle": "Insecure Connection",
+      "insecureBody": "You are on an insecure connection (HTTP). Voice and video features may not work. Set up HTTPS for full functionality."
+    },
+    "invite": {
+      "invitedHeader": "You were invited",
+      "inviteCode": "Invite code: {{inviteCode}}",
+      "registrationRequiresInvite": "Registration requires an invite link. Ask an existing member to invite you."
+    },
+    "errors": {
+      "couldNotConnect": "Could not connect: {{msg}}",
+      "couldNotCreateAccount": "Could not create account: {{msg}}"
+    }
+  },
+
+  "home": {
+    "title": "Home",
+    "sidebar": {
+      "friends": "Friends",
+      "directMessages": "Direct Messages",
+      "createGroupDm": "Create Group DM",
+      "noConversations": "No conversations yet",
+      "startDm": "Start a DM to begin chatting",
+      "groupDmMembers": "{{count}} members"
+    },
+    "dmContextMenu": {
+      "enableEncryption": "Enable Encryption",
+      "deleteConversation": "Delete Conversation"
+    },
+    "dmConfirm": {
+      "deleteTitle": "Delete Conversation",
+      "deleteMessage": "This will permanently delete all messages for both sides. This cannot be undone.",
+      "deleteConfirm": "Delete",
+      "encryptionTitle": "Enable Encryption",
+      "encryptionMessage": "This will enable end-to-end encryption for this conversation. This cannot be reversed.",
+      "encryptionConfirm": "Enable"
+    },
+    "dmToasts": {
+      "deleted": "Conversation deleted",
+      "failedDelete": "Failed to delete conversation",
+      "encryptionEnabled": "Encryption enabled",
+      "failedEnableEncryption": "Failed to enable encryption"
+    }
+  },
+
+  "friends": {
+    "title": "Friends",
+    "tabs": {
+      "all": "All",
+      "pending": "Pending",
+      "add": "Add Friend"
+    },
+    "sections": {
+      "allFriends": "All Friends — {{count}}",
+      "pending": "Pending — {{count}}"
+    },
+    "buttons": {
+      "message": "Message",
+      "removeFriend": "Remove Friend",
+      "accept": "Accept",
+      "cancel": "Cancel",
+      "reject": "Reject",
+      "sendRequest": "Send Friend Request"
+    },
+    "labels": {
+      "outgoingRequest": "Outgoing Friend Request",
+      "incomingRequest": "Incoming Friend Request"
+    },
+    "addSection": {
+      "heading": "Add Friend",
+      "description": "Search for users on this server to send a friend request.",
+      "searchPlaceholder": "Search by username..."
+    },
+    "empty": {
+      "noFriends": "No friends yet",
+      "noFriendsSubtitle": "Add friends to start chatting!",
+      "noPending": "No pending requests",
+      "noPendingSubtitle": "You're all caught up!",
+      "noSearchResults": "No users found matching \"{{searchQuery}}\""
+    },
+    "confirmRemove": {
+      "title": "Remove Friend",
+      "message": "Are you sure you want to remove this friend?",
+      "confirm": "Remove"
+    },
+    "toasts": {
+      "removed": "Friend removed",
+      "failedRemove": "Failed to remove friend",
+      "accepted": "Friend request accepted",
+      "failedAccept": "Failed to accept request",
+      "rejected": "Friend request rejected",
+      "failedReject": "Failed to reject request",
+      "sent": "Friend request sent",
+      "failedSend": "Failed to send friend request"
+    }
+  },
+
+  "discover": {
+    "title": "Discover Servers",
+    "tabs": {
+      "local": "Local",
+      "federated": "Federated"
+    },
+    "searchPlaceholder": "Search servers...",
+    "memberCount": "{{count}} members",
+    "buttons": {
+      "join": "Join",
+      "joined": "Joined"
+    },
+    "empty": {
+      "noServers": "No servers to discover",
+      "noServersSubtitle": "Check back later or join a server with an invite link.",
+      "noSearchResults": "No servers matching '{{query}}'",
+      "noFederated": "No federated servers available",
+      "noFederatedActive": "No active federated instances. Ask your admin to set up federation.",
+      "noFederatable": "Connected instances have no federatable servers."
+    },
+    "passwordDialog": {
+      "title": "Server Password",
+      "message": "\"{{name}}\" requires a password to join.",
+      "confirm": "Join"
+    },
+    "toasts": {
+      "failedLoad": "Failed to load servers",
+      "joined": "Joined {{name}}",
+      "invalidPassword": "Invalid password",
+      "failedJoin": "Failed to join server",
+      "failedJoinFederated": "Failed to join federated server"
+    }
+  },
+
+  "foundry": {
+    "title": "FoundryVTT",
+    "status": {
+      "checking": "Checking",
+      "offline": "Offline",
+      "online": "Online",
+      "open": "Open"
+    },
+    "tooltips": {
+      "focusWindow": "Focus window",
+      "openInWindow": "Open in window",
+      "refreshStatus": "Refresh status",
+      "remove": "Remove",
+      "expand": "Expand panel",
+      "collapse": "Collapse panel",
+      "disconnect": "Disconnect Foundry"
+    },
+    "empty": {
+      "noServers": "No servers yet.",
+      "addBelow": "Add a FoundryVTT server URL below."
+    },
+    "addServer": {
+      "heading": "Add Server",
+      "namePlaceholder": "Server name",
+      "urlPlaceholder": "http://yourfoundry.com",
+      "notesPlaceholder": "Notes (optional)",
+      "button": "Add Server"
+    },
+    "errors": {
+      "nameRequired": "Please enter a server name",
+      "invalidUrl": "Please enter a valid URL"
+    },
+    "main": {
+      "heading": "FoundryVTT Launcher",
+      "addServerHint": "Add a server on the left and press [icon] to launch it.",
+      "focusWindow": "Focus Foundry Window",
+      "runningDesktop": "Foundry is running in a separate window. Switch Pulse servers freely — it won't reload.",
+      "runningBrowser": "Running in a browser — Foundry will open in a popup window so HTTP servers work alongside HTTPS Pulse."
+    }
+  },
+
+  "server": {
+    "createServer": "Create Server",
+    "dropdown": {
+      "sectionLabel": "Server",
+      "addCategory": "Add Category",
+      "serverSettings": "Server Settings",
+      "createInvite": "Create Invite",
+      "logOut": "Log Out",
+      "leaveServer": "Leave Server",
+      "deleteServer": "Delete Server"
+    },
+    "confirmLeave": {
+      "title": "Leave Server",
+      "message": "Are you sure you want to leave this server?",
+      "confirm": "Leave",
+      "cancel": "Cancel"
+    },
+    "confirmDelete": {
+      "title": "Delete Server",
+      "message": "This will permanently delete {{name}} and all of its data including channels, messages, and members. This action cannot be undone.",
+      "confirm": "Delete Server",
+      "cancel": "Cancel"
+    },
+    "toasts": {
+      "deleted": "Server deleted",
+      "failedDelete": "Failed to delete server"
+    }
+  },
+
+  "serverSettings": {
+    "tabs": {
+      "general": "General",
+      "roles": "Roles",
+      "emojis": "Emojis",
+      "soundpad": "Soundpad",
+      "users": "Users",
+      "invites": "Invites",
+      "webhooks": "Webhooks",
+      "automod": "Auto-Mod",
+      "federation": "Federation",
+      "plugins": "Plugins",
+      "storage": "Storage",
+      "updates": "Updates",
+      "delete": "Delete"
+    },
+    "general": {
+      "cardTitle": "Server Information",
+      "cardDescription": "Manage your server's basic information",
+      "fields": {
+        "name": "Name",
+        "namePlaceholder": "Enter server name",
+        "description": "Description",
+        "descriptionPlaceholder": "Enter server description",
+        "password": "Password",
+        "passwordPlaceholder": "Leave empty for no password",
+        "allowNewUsers": "Allow New Users",
+        "allowNewUsersDescription": "Allow anyone to register and join your server. If disabled, only users you invite can join.",
+        "discoverable": "Discoverable",
+        "discoverableDescription": "Show this server in the Discover directory so anyone can find and join it.",
+        "federatable": "Federatable",
+        "federatableDescription": "Allow users from federated Pulse instances to discover and join this server."
+      }
+    },
+    "roles": {
+      "emptyState": "Select a role to edit or create a new one",
+      "permissionsHeading": "Permissions",
+      "permissionLabels": {
+        "SEND_MESSAGES": "Send messages",
+        "REACT_TO_MESSAGES": "React to messages",
+        "UPLOAD_FILES": "Upload files",
+        "JOIN_VOICE_CHANNELS": "Join voice channels",
+        "SHARE_SCREEN": "Share screen",
+        "ENABLE_WEBCAM": "Enable webcam",
+        "MANAGE_CHANNELS": "Manage channels",
+        "MANAGE_CHANNEL_PERMISSIONS": "Manage channel permissions",
+        "MANAGE_CATEGORIES": "Manage categories",
+        "MANAGE_ROLES": "Manage roles",
+        "MANAGE_EMOJIS": "Manage emojis",
+        "MANAGE_SETTINGS": "Manage server settings",
+        "MANAGE_USERS": "Manage users",
+        "MANAGE_MESSAGES": "Manage messages",
+        "MANAGE_STORAGE": "Manage storage",
+        "MANAGE_INVITES": "Manage invites",
+        "MANAGE_UPDATES": "Manage updates",
+        "MANAGE_PLUGINS": "Manage plugins",
+        "EXECUTE_PLUGIN_COMMANDS": "Execute plugin commands",
+        "PIN_MESSAGES": "Pin messages",
+        "MANAGE_WEBHOOKS": "Manage webhooks",
+        "MANAGE_AUTOMOD": "Manage auto-moderation"
+      },
+      "permissionDescriptions": {
+        "SEND_MESSAGES": "Grants the ability to send messages in channels.",
+        "REACT_TO_MESSAGES": "Grants the ability to react to messages.",
+        "UPLOAD_FILES": "Grants the ability to upload files in channels.",
+        "JOIN_VOICE_CHANNELS": "Grants the ability to join voice channels.",
+        "SHARE_SCREEN": "Grants the ability to share the screen.",
+        "ENABLE_WEBCAM": "Grants the ability to enable the webcam.",
+        "MANAGE_CHANNELS": "Grants the ability to create, update, and delete channels.",
+        "MANAGE_CHANNEL_PERMISSIONS": "Grants the ability to manage channel-specific permissions for roles and users.",
+        "MANAGE_CATEGORIES": "Grants the ability to create, update, and delete categories.",
+        "MANAGE_ROLES": "Grants the ability to create, update, and delete roles.",
+        "MANAGE_EMOJIS": "Grants the ability to create, update, and delete emojis.",
+        "MANAGE_SETTINGS": "Grants the ability to manage server settings.",
+        "MANAGE_USERS": "Grants the ability to manage users.",
+        "MANAGE_MESSAGES": "Grants the ability to manage messages from all users by editing or deleting them.",
+        "MANAGE_STORAGE": "Grants the ability to manage storage, such as enabling or disabling uploads.",
+        "MANAGE_INVITES": "Grants the ability to create, edit, and delete server invites.",
+        "MANAGE_UPDATES": "Grants the ability to perform updates.",
+        "MANAGE_PLUGINS": "Grants the ability to manage plugins.",
+        "EXECUTE_PLUGIN_COMMANDS": "Grants the ability to execute plugin commands.",
+        "PIN_MESSAGES": "Grants the ability to pin and unpin messages in channels.",
+        "MANAGE_WEBHOOKS": "Grants the ability to create, edit, and delete webhooks.",
+        "MANAGE_AUTOMOD": "Grants the ability to manage auto-moderation rules."
+      },
+      "updateRole": {
+        "cardTitle": "Edit Role",
+        "setDefaultTooltip": "Set as Default Role",
+        "defaultRoleAlert": "This is the default role. New members will be assigned this role upon joining.",
+        "ownerRoleAlert": "This is the owner role. This role has all permissions and cannot be deleted or have its permissions changed.",
+        "fields": {
+          "name": "Role Name",
+          "color": "Role Color"
+        },
+        "buttons": {
+          "close": "Close",
+          "save": "Save Role"
+        },
+        "confirmDelete": {
+          "title": "Delete Role",
+          "confirm": "Delete"
+        },
+        "confirmSetDefault": {
+          "title": "Set as Default Role",
+          "confirm": "Set as Default"
+        },
+        "toasts": {
+          "deleted": "Role deleted",
+          "failedDelete": "Failed to delete role",
+          "updated": "Role updated",
+          "defaultUpdated": "Default role updated",
+          "failedSetDefault": "Failed to set default role"
+        }
+      }
+    },
+    "emojis": {
+      "list": {
+        "cardTitle": "Emojis",
+        "searchPlaceholder": "Search emojis...",
+        "noEmojis": "No custom emojis yet",
+        "noResults": "No emojis found"
+      },
+      "upload": {
+        "heading": "Upload Custom Emojis",
+        "description": "Select an emoji to edit or upload new ones to customize your server",
+        "button": "Upload Emoji"
+      },
+      "update": {
+        "cardTitle": "Edit Emoji",
+        "nameLabel": "Name",
+        "namePlaceholder": "Enter emoji name (no spaces or special characters)",
+        "nameHint": "This will be used as :{{name}}: in messages",
+        "uploadedBy": "Uploaded by {{name}}",
+        "buttons": {
+          "close": "Close",
+          "save": "Save Changes"
+        },
+        "confirmDelete": {
+          "title": "Delete Emoji",
+          "message": "Are you sure you want to delete this emoji? This action cannot be undone.",
+          "confirm": "Delete"
+        },
+        "toasts": {
+          "created": "Emoji created",
+          "failedCreate": "Failed to upload emoji",
+          "updated": "Emoji updated",
+          "failedUpdate": "Failed to update emoji",
+          "deleted": "Emoji deleted",
+          "failedDelete": "Failed to delete emoji"
+        }
+      }
+    },
+    "soundpad": {
+      "heading": "Soundpad",
+      "description": "Manage sounds available in the voice channel soundpad",
+      "buttons": {
+        "upload": "Upload Sound",
+        "uploading": "Uploading...",
+        "preview": "Preview"
+      },
+      "empty": {
+        "title": "No sounds yet",
+        "hint": "Upload MP3, WAV or OGG files to get started"
+      },
+      "toasts": {
+        "uploaded": "Sound(s) uploaded successfully!",
+        "failedUpload": "Failed to upload sound",
+        "deleted": "Sound deleted",
+        "failedDelete": "Failed to delete sound"
+      }
+    },
+    "users": {
+      "cardTitle": "Users",
+      "cardDescription": "Manage server users and their permissions",
+      "table": {
+        "avatar": "Avatar",
+        "user": "User",
+        "roles": "Roles",
+        "joinedAt": "Joined At",
+        "lastJoin": "Last Join",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "searchPlaceholder": "Search users by name or identity...",
+      "emptyMessage": "No users found",
+      "moderateUser": "Moderate User",
+      "status": {
+        "online": "Online",
+        "offline": "Offline"
+      }
+    },
+    "invites": {
+      "cardTitle": "Server Invites",
+      "cardDescription": "Manage invitation links for users to join the server",
+      "createButton": "Create Invite",
+      "table": {
+        "code": "Code",
+        "creator": "Creator",
+        "uses": "Uses",
+        "expires": "Expires",
+        "created": "Created",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "searchPlaceholder": "Search invites by code or creator...",
+      "emptyMessage": "No invites found",
+      "noItemsFound": "No items found"
+    },
+    "webhooks": {
+      "heading": "Webhooks",
+      "description": "Webhooks allow external services to send messages to your channels.",
+      "buttons": {
+        "create": "Create Webhook",
+        "copyUrl": "Copy Webhook URL",
+        "delete": "Delete Webhook",
+        "creating": "Creating...",
+        "createConfirm": "Create",
+        "cancel": "Cancel"
+      },
+      "loading": "Loading webhooks...",
+      "empty": "No webhooks yet. Create one to get started.",
+      "form": {
+        "namePlaceholder": "Webhook name",
+        "channelPlaceholder": "Select channel"
+      },
+      "toasts": {
+        "deleted": "Webhook deleted",
+        "failedDelete": "Failed to delete webhook",
+        "urlCopied": "Webhook URL copied",
+        "created": "Webhook created",
+        "failedCreate": "Failed to create webhook",
+        "failedLoad": "Failed to load webhooks"
+      }
+    },
+    "automod": {
+      "heading": "Auto-Moderation",
+      "description": "Automatically filter messages based on rules.",
+      "ruleTypes": {
+        "keyword": "Keyword Filter",
+        "spam": "Spam Detection",
+        "mention": "Mention Spam",
+        "link": "Link Filter"
+      },
+      "buttons": {
+        "create": "Create Rule",
+        "creating": "Creating...",
+        "createConfirm": "Create",
+        "cancel": "Cancel"
+      },
+      "loading": "Loading auto-mod rules...",
+      "empty": "No auto-mod rules. Create one to get started.",
+      "status": {
+        "active": "Active",
+        "disabled": "Disabled"
+      },
+      "form": {
+        "enabledLabel": "Enabled",
+        "namePlaceholder": "Rule name",
+        "keywordsPlaceholder": "Keywords (one per line)",
+        "maxMentions": "Max mentions:"
+      },
+      "toasts": {
+        "failedLoad": "Failed to load auto-mod rules",
+        "failedToggle": "Failed to toggle rule",
+        "deleted": "Rule deleted",
+        "failedDelete": "Failed to delete rule",
+        "created": "Rule created",
+        "failedCreate": "Failed to create rule"
+      }
+    },
+    "federation": {
+      "cardTitle": "Federation",
+      "cardDescription": "Connect with other Pulse instances to form a federated network. Users from federated instances can join your servers using their home identity.",
+      "fields": {
+        "enableLabel": "Enable Federation",
+        "enableDescription": "Allow this instance to participate in the Pulse federation network.",
+        "instanceDomain": "Instance Domain",
+        "publicKey": "Public Key"
+      },
+      "saveButton": "Save Settings",
+      "instances": {
+        "cardTitle": "Federated Instances",
+        "cardDescription": "Manage connections to other Pulse instances.",
+        "addPlaceholder": "https://pulse.other-instance.com",
+        "addButton": "Add Instance",
+        "connecting": "Connecting...",
+        "empty": "No federated instances yet. Add one to get started.",
+        "buttons": {
+          "accept": "Accept",
+          "block": "Block",
+          "remove": "Remove"
+        }
+      },
+      "toasts": {
+        "saved": "Federation settings saved",
+        "failedSave": "Failed to save settings",
+        "requestSent": "Federation request sent",
+        "failedAdd": "Failed to add instance",
+        "accepted": "Federation accepted",
+        "failedAccept": "Failed to accept",
+        "blocked": "Instance blocked",
+        "failedBlock": "Failed to block",
+        "removed": "Instance removed",
+        "failedRemove": "Failed to remove"
+      }
+    },
+    "plugins": {
+      "cardTitle": "Plugins",
+      "cardDescription": "Manage installed plugins and extend your Pulse server with additional features and functionality.",
+      "buttons": {
+        "refresh": "Refresh",
+        "logs": "Logs",
+        "commands": "Commands",
+        "settings": "Settings"
+      },
+      "badges": {
+        "enabled": "Enabled",
+        "disabled": "Disabled",
+        "error": "Error"
+      },
+      "empty": {
+        "title": "No plugins installed",
+        "description": "Install plugins to add new features and extend the functionality of your Pulse server."
+      },
+      "disabledState": {
+        "title": "Plugins are disabled",
+        "description": "Plugins have been disabled for this server. Enable plugins in the server settings to manage and use plugins."
+      },
+      "toasts": {
+        "refreshed": "Plugins list refreshed",
+        "failedRefresh": "Failed to refresh plugins list",
+        "enabled": "Plugin enabled successfully",
+        "disabled": "Plugin disabled successfully",
+        "failedToggle": "Failed to toggle plugin"
+      }
+    },
+    "storage": {
+      "cardTitle": "Storage",
+      "fields": {
+        "allowUploads": "Allow uploads",
+        "quota": "Quota",
+        "maxFileSize": "Max file size",
+        "quotaPerUser": "Quota per user",
+        "overflowAction": "Overflow action"
+      }
+    },
+    "updates": {
+      "cardTitle": "Updates",
+      "cardDescription": "Check for and install updates to keep your Pulse server running with the latest features and security improvements.",
+      "fields": {
+        "currentVersion": "Current Version",
+        "latestVersion": "Latest Version",
+        "unknown": "Unknown"
+      },
+      "alerts": {
+        "notSupportedTitle": "Updates Not Supported",
+        "notSupportedBody": "Automatic updates are not supported in this environment. Please refer to the documentation for manual update instructions.",
+        "availableTitle": "Update Available",
+        "availableBody": "A new version ({{version}}) is available for download. Updating will restart the server and may cause temporary downtime.",
+        "upToDateTitle": "Up to Date",
+        "upToDateBody": "Your server is running the latest version of Pulse."
+      },
+      "buttons": {
+        "close": "Close",
+        "update": "Update Server",
+        "noUpdates": "No Updates Available"
+      }
+    },
+    "deleteSection": {
+      "heading": "Delete Server",
+      "description": "Permanently delete {{name}}. This will remove all channels, messages, roles, and data. This action cannot be undone.",
+      "button": "Delete Server",
+      "confirm": {
+        "title": "Are you sure?",
+        "description": "This will permanently delete {{name}} and all of its data including channels, messages, and members. This action cannot be undone.",
+        "cancel": "Cancel",
+        "action": "Delete Server"
+      }
+    }
+  },
+
+  "userSettings": {
+    "title": "Settings",
+    "logOut": "Log Out",
+    "nav": {
+      "userSettings": "User Settings",
+      "appSettings": "App Settings",
+      "myAccount": "My Account",
+      "password": "Password",
+      "encryption": "Encryption",
+      "appearance": "Appearance",
+      "language": "Language",
+      "soundsNotifications": "Sounds & Notifications",
+      "voiceVideo": "Voice & Video"
+    },
+    "sections": {
+      "profile": {
+        "title": "My Account",
+        "description": "Update your personal information and settings."
+      },
+      "password": {
+        "title": "Password",
+        "description": "Manage your account password."
+      },
+      "encryption": {
+        "title": "Encryption",
+        "description": "Manage your end-to-end encryption keys."
+      },
+      "appearance": {
+        "title": "Appearance",
+        "description": "Customize how the app looks."
+      },
+      "language": {
+        "title": "Language",
+        "description": "Choose the display language for the app."
+      },
+      "sounds": {
+        "title": "Sounds & Notifications",
+        "description": "Control sound effects and desktop notifications."
+      },
+      "devices": {
+        "title": "Voice & Video",
+        "description": "Configure your audio and video devices."
+      }
+    },
+    "language": {
+      "heading": "Display Language",
+      "description": "Choose the language used throughout the interface. Changes take effect immediately."
+    },
+    "logOutConfirm": {
+      "title": "Log Out",
+      "message": "Are you sure you want to log out? Your end-to-end encryption keys will be cleared from this device. Make sure you have a backup of your keys before proceeding.",
+      "confirm": "Log Out",
+      "cancel": "Cancel"
+    },
+    "profile": {
+      "displayName": "Display Name",
+      "bio": "Bio",
+      "bannerColor": "Banner color",
+      "displayNamePlaceholder": "Display Name",
+      "bioPlaceholder": "Tell us about yourself...",
+      "avatar": "Avatar",
+      "removeAvatar": "Remove avatar",
+      "banner": "Banner",
+      "toasts": {
+        "updated": "Profile updated"
+      }
+    },
+    "password": {
+      "currentPassword": "Current Password",
+      "newPassword": "New Password",
+      "confirmNewPassword": "Confirm New Password",
+      "toasts": {
+        "updated": "Password updated!"
+      }
+    },
+    "appearance": {
+      "theme": {
+        "heading": "Theme",
+        "description": "Choose how the app looks for you.",
+        "options": {
+          "dark": "Dark",
+          "light": "Light",
+          "onyx": "Onyx",
+          "midnight": "Midnight",
+          "sunset": "Sunset",
+          "rose": "Rose",
+          "forest": "Forest",
+          "dracula": "Dracula",
+          "nord": "Nord",
+          "sand": "Sand",
+          "system": "System"
+        }
+      },
+      "chatDensity": {
+        "heading": "Chat Density",
+        "description": "Choose between a cozy or compact message layout.",
+        "cozy": "Cozy",
+        "compact": "Compact"
+      },
+      "messageSpacing": {
+        "heading": "Message Spacing",
+        "description": "Control the space between message groups.",
+        "tight": "Tight",
+        "normal": "Normal",
+        "relaxed": "Relaxed"
+      },
+      "timeFormat": {
+        "heading": "Time Format",
+        "description": "Choose how timestamps are displayed.",
+        "12hour": "12 Hour",
+        "24hour": "24 Hour"
+      },
+      "fontScaling": {
+        "heading": "Font Scaling",
+        "description": "Adjust the text size in chat messages."
+      },
+      "zoomLevel": {
+        "heading": "Zoom Level",
+        "description": "Scale the entire interface. Best suited for desktop."
+      }
+    },
+    "encryption": {
+      "status": {
+        "checking": "Checking encryption status...",
+        "keysRegistered": "End-to-end encryption keys are registered",
+        "keysRegisteredSubtitle": "Your DM messages are encrypted with the Signal Protocol",
+        "noKeys": "No encryption keys found on this device",
+        "noKeysSubtitle": "Import a backup to restore your keys, or start a DM to generate new ones"
+      },
+      "generateKeys": {
+        "regenerateHeading": "Regenerate Keys",
+        "generateHeading": "Generate Keys",
+        "regenerating": "Generating...",
+        "regenerateButton": "Regenerate Keys",
+        "generateButton": "Generate Keys"
+      },
+      "serverBackup": {
+        "heading": "Server Backup",
+        "backupExists": "Server backup exists — last updated {{date}}",
+        "noBackup": "No server backup found",
+        "passphrasePlaceholder": "Passphrase (min. 8 characters)",
+        "confirmPassphrasePlaceholder": "Confirm passphrase",
+        "backingUp": "Backing up...",
+        "button": "Back Up to Server"
+      },
+      "restoreFromServer": {
+        "heading": "Restore from Server",
+        "passphrasePlaceholder": "Backup passphrase",
+        "restoring": "Restoring...",
+        "button": "Restore from Server"
+      },
+      "export": {
+        "heading": "Export Keys",
+        "exporting": "Exporting...",
+        "button": "Export Keys"
+      },
+      "import": {
+        "heading": "Import Keys",
+        "chooseFile": "Choose File",
+        "noFile": "No file selected",
+        "passphrasePlaceholder": "Backup passphrase",
+        "importing": "Importing...",
+        "button": "Import Keys"
+      },
+      "warning": "Important: Your encryption keys are the only way to read your encrypted messages. If you lose your keys and don't have a backup, past encrypted messages will be permanently unreadable. Keep your backup file and passphrase in a secure location.",
+      "validation": {
+        "passphraseTooShort": "Passphrase must be at least 8 characters",
+        "passphraseMismatch": "Passphrases do not match",
+        "noFile": "Please select a backup file",
+        "noPassphrase": "Please enter the backup passphrase",
+        "noRestorePassphrase": "Please enter the passphrase used during backup"
+      },
+      "toasts": {
+        "regenerated": "Keys regenerated successfully",
+        "generated": "Keys generated successfully",
+        "exported": "Keys exported successfully",
+        "imported": "Keys imported successfully",
+        "backedUp": "Keys backed up to server",
+        "restored": "Keys restored from server"
+      }
+    },
+    "devices": {
+      "microphone": "Microphone",
+      "echoCancellation": "Echo cancellation",
+      "noiseSuppression": "Noise suppression",
+      "automaticGainControl": "Automatic gain control",
+      "defaultMicrophone": "Default Microphone",
+      "selectInputDevice": "Select the input device",
+      "webcam": "Webcam",
+      "defaultWebcam": "Default Webcam",
+      "screenSharing": "Screen Sharing",
+      "screenSharingNote": "Screen sharing settings take effect on your next share.",
+      "videoBitrate": "Video Bitrate",
+      "audioBitrate": "Audio Bitrate",
+      "systemAudioCapture": "System Audio Capture (macOS)",
+      "systemAudioDescription": "Share system audio during screen sharing. Requires a virtual audio driver installed to /Library/Audio/Plug-Ins/HAL/.",
+      "videoBitrateOptions": {
+        "3mbps": "3 Mbps",
+        "5mbps": "5 Mbps",
+        "8mbps": "8 Mbps",
+        "10mbps": "10 Mbps",
+        "15mbps": "15 Mbps",
+        "20mbps": "20 Mbps",
+        "30mbps": "30 Mbps"
+      },
+      "audioBitrateOptions": {
+        "64kbps": "64 kbps",
+        "96kbps": "96 kbps",
+        "128kbps": "128 kbps",
+        "192kbps": "192 kbps",
+        "256kbps": "256 kbps",
+        "320kbps": "320 kbps"
+      },
+      "driverStatus": {
+        "installed": "Driver installed and active",
+        "installedInactive": "Driver installed but not active (restart coreaudiod)",
+        "notInstalled": "Driver not installed"
+      },
+      "buttons": {
+        "installDriver": "Install Driver",
+        "uninstallDriver": "Uninstall Driver"
+      },
+      "toasts": {
+        "saved": "Device settings saved",
+        "driverInstalled": "Audio driver installed — 'Pulse Audio' device is now available",
+        "driverUninstalled": "Audio driver uninstalled",
+        "failedInstall": "Failed to install audio driver",
+        "failedUninstall": "Failed to uninstall audio driver"
+      }
+    },
+    "sounds": {
+      "masterVolume": "Master Volume",
+      "masterVolumeDescription": "Control the overall volume for all sounds.",
+      "categories": "Sound Categories",
+      "categoriesDescription": "Enable or disable sounds for each category.",
+      "desktopNotifications": "Desktop Notifications",
+      "desktopNotificationsDescription": "Show browser notifications when you receive messages while the tab is in the background.",
+      "enableNotifications": "Enable Desktop Notifications",
+      "notificationsBlocked": "Notifications are blocked by your browser.",
+      "notificationsDescription": "Receive alerts for new messages when the tab is not focused.",
+      "notificationsBlockedWarning": "Notifications are blocked. To enable them, update your browser's site permissions for this page and refresh.",
+      "previewSound": "Preview sound"
+    }
+  },
+
+  "channelSettings": {
+    "title": "Channel Settings",
+    "tabs": {
+      "general": "General",
+      "permissions": "Permissions",
+      "security": "Security"
+    },
+    "general": {
+      "cardTitle": "Channel Information",
+      "cardDescription": "Manage your channel's basic information",
+      "fields": {
+        "name": "Name",
+        "namePlaceholder": "Enter channel name",
+        "topic": "Topic",
+        "topicPlaceholder": "Enter channel topic",
+        "private": "Private",
+        "privateDescription": "Restricts access to this channel to specific roles and members.",
+        "slowMode": "Slow Mode",
+        "slowModeDescription": "Limit how often users can send messages in this channel."
+      }
+    },
+    "security": {
+      "cardTitle": "Security",
+      "cardDescription": "Manage some security settings for this channel",
+      "e2ee": {
+        "label": "End-to-End Encryption",
+        "loading": "Loading...",
+        "enabled": "End-to-end encryption is enabled for this channel",
+        "warning": "Once enabled, E2EE cannot be disabled. Existing messages will remain unencrypted, but all new messages will be encrypted. Server-side search and automod will not work for encrypted messages.",
+        "confirmTitle": "Enable End-to-End Encryption",
+        "confirmLabel": "Enable E2EE"
+      },
+      "fileAccessToken": {
+        "label": "File Access Token",
+        "help": "Only used for private channels",
+        "rotateButton": "Rotate Token"
+      },
+      "toasts": {
+        "tokenRotated": "File access token rotated successfully",
+        "failedRotateToken": "Failed to rotate file access token",
+        "e2eeEnabled": "End-to-end encryption enabled",
+        "failedE2EE": "Failed to enable E2EE"
+      }
+    }
+  },
+
+  "categorySettings": {
+    "cardTitle": "Category Information",
+    "cardDescription": "Manage your category's basic information",
+    "fields": {
+      "name": "Name",
+      "namePlaceholder": "Enter category name"
+    }
+  },
+
+  "dialogs": {
+    "createChannel": {
+      "title": "Create New Channel",
+      "channelTypeLabel": "Channel type",
+      "channelNameLabel": "Channel name",
+      "channelNamePlaceholder": "Channel name",
+      "types": {
+        "text": "Text Channel",
+        "textDescription": "Share text, images, files and more",
+        "voice": "Voice Channel",
+        "voiceDescription": "Hangout with voice, video and screen sharing",
+        "forum": "Forum Channel",
+        "forumDescription": "Organized discussions with threaded posts"
+      },
+      "buttons": {
+        "cancel": "Cancel",
+        "create": "Create channel"
+      }
+    },
+    "createCategory": {
+      "title": "Create New Category",
+      "nameLabel": "Category name",
+      "namePlaceholder": "Category name",
+      "buttons": {
+        "cancel": "Cancel",
+        "create": "Create Category"
+      }
+    },
+    "createServer": {
+      "title": "Create a Server",
+      "description": "Give your new server a name to get started.",
+      "nameLabel": "Server name",
+      "namePlaceholder": "My Server",
+      "creating": "Creating...",
+      "createButton": "Create Server",
+      "separator": "or join existing",
+      "inviteSection": {
+        "text": "Have an invite? Enter the code or link below.",
+        "label": "Invite code or link",
+        "placeholder": "abc123 or https://chat.com/invite=abc123",
+        "joining": "Joining...",
+        "button": "Join Server"
+      }
+    },
+    "createInvite": {
+      "title": "Create Server Invite",
+      "description": "Create a new invitation link for users to join the server.",
+      "fields": {
+        "code": "Code",
+        "codePlaceholder": "Invite code",
+        "maxUses": "Max uses",
+        "maxUsesPlaceholder": "Max uses",
+        "maxUsesDescription": "Use 0 for unlimited uses.",
+        "expiresIn": "Expires in",
+        "expiresInDescription": "Leave empty for no expiration."
+      },
+      "buttons": {
+        "cancel": "Cancel",
+        "create": "Create Invite"
+      },
+      "toasts": {
+        "created": "Invite created"
+      }
+    },
+    "confirmAction": {
+      "defaultTitle": "Confirm Action",
+      "defaultMessage": "Are you sure you want to perform this action?",
+      "defaultCancel": "Cancel",
+      "defaultConfirm": "Confirm"
+    },
+    "textInput": {
+      "defaultCancel": "Cancel",
+      "defaultConfirm": "Confirm"
+    },
+    "createGroupDm": {
+      "title": "Create Group DM",
+      "namePlaceholder": "Group name (optional)",
+      "selectFriends": "Select friends ({{count}}/9)",
+      "noFriends": "No friends to add",
+      "buttons": {
+        "cancel": "Cancel",
+        "create": "Create"
+      },
+      "toasts": {
+        "created": "Group DM created",
+        "failedCreate": "Failed to create group DM"
+      }
+    },
+    "claimAdmin": {
+      "title": "Claim Admin",
+      "accessTokenLabel": "Access token",
+      "accessTokenPlaceholder": "Enter access token",
+      "buttons": {
+        "cancel": "Cancel",
+        "claim": "Claim"
+      },
+      "toasts": {
+        "success": "You are now an owner of this server",
+        "invalidToken": "Invalid access token"
+      }
+    },
+    "assignRole": {
+      "title": "Assign role to {{name}}",
+      "selfAssignAlert": "You are assigning a role to yourself.",
+      "allRolesAssigned": "This user already has all available roles.",
+      "roleLabel": "Role",
+      "rolePlaceholder": "Select a role",
+      "buttons": {
+        "cancel": "Cancel",
+        "assign": "Assign Role"
+      },
+      "toasts": {
+        "selectRole": "Please select a role",
+        "assigned": "Role assigned successfully",
+        "failedAssign": "Failed to assign role"
+      }
+    },
+    "pluginLogs": {
+      "labels": {
+        "info": "Info",
+        "errors": "Errors",
+        "debug": "Debug",
+        "total": "Total",
+        "logs": "logs",
+        "show": "Show"
+      },
+      "logLimits": {
+        "100": "100 logs",
+        "500": "500 logs",
+        "all": "All logs"
+      },
+      "empty": {
+        "title": "No logs yet",
+        "subtitle": "Logs will appear here when the plugin generates them"
+      }
+    },
+    "pluginSettings": {
+      "sidebar": {
+        "heading": "Settings",
+        "noSettings": "No settings available for this plugin"
+      },
+      "edited": "Edited",
+      "selectSettingPrompt": "Select a setting to edit",
+      "noConfigurableSettings": "No configurable settings",
+      "valueLabel": "Value",
+      "keyLabel": "Key: {{key}}",
+      "unsavedChanges": "{{count}} unsaved change",
+      "unsavedChangesPlural": "{{count}} unsaved changes",
+      "noUnsavedChanges": "No unsaved changes",
+      "settingsTitle": "Settings for {{pluginName}}",
+      "buttons": {
+        "close": "Close",
+        "saving": "Saving...",
+        "save": "Save Changes"
+      },
+      "toasts": {
+        "saved": "Settings saved",
+        "failedLoad": "Failed to load plugin settings",
+        "failedSave": "Failed to save settings"
+      }
+    }
+  },
+
+  "contextMenus": {
+    "message": {
+      "reply": "Reply",
+      "editMessage": "Edit Message",
+      "unpinMessage": "Unpin Message",
+      "pinMessage": "Pin Message",
+      "createThread": "Create Thread",
+      "addReaction": "Add Reaction",
+      "copyText": "Copy Text",
+      "copyMessageId": "Copy Message ID",
+      "selectMessages": "Select Messages",
+      "deleteMessage": "Delete Message",
+      "confirmDelete": {
+        "title": "Delete Message",
+        "message": "Are you sure you want to delete this message? This action is irreversible.",
+        "confirm": "Delete",
+        "cancel": "Cancel"
+      },
+      "toasts": {
+        "deleted": "Message deleted",
+        "failedDelete": "Failed to delete message",
+        "unpinned": "Message unpinned",
+        "pinned": "Message pinned",
+        "failedUnpin": "Failed to unpin message",
+        "failedPin": "Failed to pin message",
+        "threadCreated": "Thread created",
+        "failedCreateThread": "Failed to create thread",
+        "failedAddReaction": "Failed to add reaction",
+        "copied": "Copied to clipboard",
+        "linkCopied": "Message link copied"
+      }
+    },
+    "channel": {
+      "edit": "Edit",
+      "delete": "Delete",
+      "purgeMessages": "Purge Messages",
+      "confirmDelete": {
+        "title": "Delete Channel",
+        "message": "Are you sure you want to delete this channel? This action cannot be undone.",
+        "confirm": "Delete",
+        "cancel": "Cancel"
+      },
+      "confirmPurge": {
+        "title": "Purge All Messages",
+        "message": "This will permanently delete ALL messages in #{{name}}. To confirm, type: {{name}}",
+        "confirm": "Purge",
+        "cancel": "Cancel"
+      },
+      "toasts": {
+        "deleted": "Channel deleted",
+        "failedDelete": "Failed to delete channel",
+        "nameMismatch": "Channel name does not match",
+        "purged": "All messages purged",
+        "failedPurge": "Failed to purge messages"
+      }
+    },
+    "category": {
+      "edit": "Edit",
+      "delete": "Delete",
+      "confirmDelete": {
+        "title": "Delete Category",
+        "message": "Are you sure you want to delete this category? This WILL delete all the channels within this category. This action cannot be undone.",
+        "confirm": "Delete",
+        "cancel": "Cancel"
+      },
+      "toasts": {
+        "deleted": "Category deleted",
+        "failedDelete": "Failed to delete category"
+      }
+    },
+    "user": {
+      "mention": "Mention",
+      "message": "Message",
+      "mute": "Mute",
+      "volume": "Volume",
+      "addNote": "Add Note",
+      "roles": "Roles",
+      "noteDialog": {
+        "title": "Add Note",
+        "message": "Note about {{name}}",
+        "confirm": "Save",
+        "cancel": "Cancel"
+      },
+      "toasts": {
+        "noteSaved": "Note saved",
+        "failedSaveNote": "Failed to save note",
+        "failedUpdateRole": "Failed to update role"
+      }
+    }
+  },
+
+  "voice": {
+    "connection": {
+      "connecting": "Connecting...",
+      "connected": "Voice connected",
+      "failed": "Connection failed",
+      "disconnected": "Disconnected"
+    },
+    "buttons": {
+      "disconnect": "Disconnect",
+      "cameraOn": "Turn off camera",
+      "cameraOff": "Turn on camera",
+      "screenShareStop": "Stop screen share",
+      "screenShareStart": "Start screen share",
+      "micMute": "Mute microphone (Ctrl+Shift+M)",
+      "micUnmute": "Unmute microphone (Ctrl+Shift+M)",
+      "deafen": "Deafen (Ctrl+Shift+D)",
+      "undeafen": "Undeafen (Ctrl+Shift+D)"
+    },
+    "devices": {
+      "inputDevice": "Input Device",
+      "outputDevice": "Output Device",
+      "defaultMicrophone": "Default Microphone",
+      "defaultSpeaker": "Default Speaker",
+      "voiceSettings": "Voice Settings"
+    },
+    "userVolume": "User Volume",
+    "stats": {
+      "title": "Transport Statistics",
+      "outgoing": "Outgoing",
+      "incoming": "Incoming",
+      "sessionTotals": "Session Totals",
+      "noData": "No data",
+      "noRemoteStreams": "No remote streams",
+      "rate": "Rate: {{value}}/s",
+      "packets": "Packets: {{count}}",
+      "rtt": "RTT: {{ms}} ms",
+      "packetsLost": "Lost: {{count}}"
+    },
+    "fullscreen": {
+      "openChat": "Open Chat",
+      "openChatTitle": "Open voice chat text channel",
+      "close": "Close",
+      "closeTitle": "Close (Esc)"
+    },
+    "externalStream": "External Stream ({{pluginId}})",
+    "externalStreamDefault": "External Stream",
+    "streamSettings": {
+      "title": "Stream Settings",
+      "volume": "Volume",
+      "mute": "Mute",
+      "unmute": "Unmute"
+    },
+    "zoom": {
+      "enable": "Enable Zoom",
+      "disable": "Disable Zoom"
+    },
+    "empty": {
+      "noOne": "No one in the voice channel",
+      "joinPrompt": "Join the voice channel to start a meeting"
+    }
+  },
+
+  "topBar": {
+    "e2eeTooltip": "End-to-end encrypted",
+    "closeVoiceChat": "Close Voice Chat",
+    "openVoiceChat": "Open Voice Chat",
+    "search": "Search (Ctrl+K)",
+    "pinnedMessages": "Pinned Messages",
+    "closeMembersSidebar": "Close Members Sidebar",
+    "openMembersSidebar": "Open Members Sidebar",
+    "notifications": "Notification Settings",
+    "notificationLevels": {
+      "all": "All Messages",
+      "mentions": "Only @mentions",
+      "nothing": "Nothing",
+      "default": "Use Default"
+    },
+    "notificationToasts": {
+      "updated": "Notification preference updated",
+      "failedUpdate": "Failed to update notification preference"
+    },
+    "pinnedMessagesPanel": {
+      "title": "Pinned Messages",
+      "loading": "Loading...",
+      "empty": "No pinned messages in this channel.",
+      "unpin": "Unpin",
+      "toasts": {
+        "unpinned": "Message unpinned",
+        "failedUnpin": "Failed to unpin message",
+        "failedLoad": "Failed to load pinned messages"
+      }
+    },
+    "threads": {
+      "title": "Threads",
+      "showArchived": "Show Archived",
+      "hideArchived": "Hide Archived",
+      "loading": "Loading...",
+      "empty": "No threads yet",
+      "archived": "(archived)",
+      "messageCount": "{{count}} message",
+      "messageCountPlural": "{{count}} messages",
+      "archive": "Archive",
+      "unarchive": "Unarchive",
+      "archiveButton": "Archive Thread",
+      "unarchiveButton": "Unarchive Thread",
+      "toasts": {
+        "archived": "Thread archived",
+        "unarchived": "Thread unarchived",
+        "failedUpdate": "Failed to update thread"
+      }
+    }
+  },
+
+  "chat": {
+    "inputPlaceholder": "Message...",
+    "newMessages": "New messages",
+    "messageDeleted": "Message deleted",
+    "attachment": "Attachment",
+    "editInline": {
+      "placeholder": "Edit message..."
+    },
+    "messageActions": {
+      "editMessage": "Edit Message",
+      "deleteMessage": "Delete Message",
+      "unpinMessage": "Unpin Message",
+      "pinMessage": "Pin Message",
+      "reply": "Reply",
+      "createThread": "Create Thread",
+      "addReaction": "Add Reaction"
+    },
+    "selectionBar": {
+      "selected": "{{count}} selected",
+      "delete": "Delete",
+      "clear": "Clear",
+      "confirmDelete": {
+        "title": "Delete {{count}} Messages",
+        "message": "Are you sure you want to delete {{count}} selected message(s)? This cannot be undone.",
+        "confirm": "Delete {{count}}",
+        "cancel": "Cancel"
+      },
+      "toasts": {
+        "deleted": "Deleted {{count}} messages",
+        "failedDelete": "Failed to delete messages"
+      }
+    },
+    "typing": {
+      "one": "{{name}} is typing...",
+      "two": "{{name1}} and {{name2}} are typing...",
+      "many": "{{name}} and {{count}} others are typing..."
+    },
+    "systemMessages": {
+      "identityReset": "'s encryption keys have changed. This may mean they reinstalled the app or reset their keys."
+    },
+    "fetchingMessages": "Fetching older messages...",
+    "jumpToPresent": "Jump to Present",
+    "uploadingFiles": "Uploading files ({{size}})",
+    "slowMode": "Slow mode: {{remaining}}s remaining",
+    "inputChannelPlaceholder": "Message #{{channel}}",
+    "today": "Today at {{time}}",
+    "yesterday": "Yesterday at {{time}}",
+    "toasts": {
+      "failedSend": "Failed to send message",
+      "failedSendGif": "Failed to send GIF"
+    }
+  },
+
+  "forum": {
+    "searchPlaceholder": "Search posts...",
+    "newPost": "New Post",
+    "sort": {
+      "latestActivity": "Latest Activity",
+      "creationDate": "Creation Date"
+    },
+    "tags": {
+      "all": "All",
+      "manage": "Tags"
+    },
+    "empty": {
+      "noMatchingPosts": "No matching posts",
+      "noPosts": "No posts yet",
+      "firstPost": "Be the first to start a discussion"
+    },
+    "createPost": {
+      "heading": "New Post",
+      "titlePlaceholder": "Post title",
+      "contentPlaceholder": "Write your post...",
+      "uploading": "Uploading...",
+      "addImage": "Add Image",
+      "createButton": "Create Post",
+      "toasts": {
+        "failedUpload": "Failed to upload file",
+        "created": "Post created",
+        "failedCreate": "Failed to create post"
+      }
+    },
+    "postContextMenu": {
+      "openPost": "Open Post",
+      "unfollowPost": "Unfollow Post",
+      "followPost": "Follow Post",
+      "editTags": "Edit Tags",
+      "copyLink": "Copy Link",
+      "deletePost": "Delete Post",
+      "confirmDelete": {
+        "title": "Delete Post",
+        "message": "Are you sure you want to delete '{{name}}'? This will permanently remove the post and all its replies.",
+        "confirm": "Delete",
+        "cancel": "Cancel"
+      },
+      "toasts": {
+        "following": "Following post",
+        "unfollowed": "Unfollowed post",
+        "failedUpdateFollow": "Failed to update follow status",
+        "linkCopied": "Link copied",
+        "deleted": "Post deleted",
+        "failedDelete": "Failed to delete post"
+      }
+    },
+    "editTagsDialog": {
+      "noTags": "No tags available. Create tags in the forum settings.",
+      "saving": "Saving...",
+      "save": "Save",
+      "toasts": {
+        "updated": "Tags updated",
+        "failedUpdate": "Failed to update tags"
+      }
+    },
+    "manageTags": {
+      "title": "Manage Tags",
+      "newTagLabel": "New Tag",
+      "tagNamePlaceholder": "Tag name",
+      "addButton": "Add",
+      "existingTagsLabel": "Existing Tags",
+      "saveButton": "Save",
+      "cancelButton": "Cancel",
+      "toasts": {
+        "failedCreate": "Failed to create tag",
+        "failedUpdate": "Failed to update tag",
+        "failedDelete": "Failed to delete tag"
+      }
+    },
+    "timeAgo": {
+      "justNow": "Just now",
+      "minutesAgo": "{{count}}m ago",
+      "hoursAgo": "{{count}}h ago",
+      "daysAgo": "{{count}}d ago"
+    }
+  },
+
+  "search": {
+    "placeholder": "Search messages...",
+    "jumpButton": "Jump",
+    "empty": {
+      "start": "Start typing to search messages",
+      "noResults": "No messages found",
+      "tryDifferent": "Try a different search term"
+    },
+    "loadMore": "Load more results",
+    "filters": {
+      "channel": "Channel",
+      "from": "From",
+      "hasFile": "has: file",
+      "hasLink": "has: link",
+      "inChannel": "in: #{{name}}",
+      "fromUser": "from: {{name}}"
+    }
+  },
+
+  "soundpad": {
+    "title": "Soundpad",
+    "noSounds": "No sounds available.",
+    "buttonTitle": "Soundpad"
+  },
+
+  "screenPicker": {
+    "title": "Share your screen",
+    "sections": {
+      "entireScreen": "Entire Screen",
+      "appWindow": "Application Window"
+    },
+    "audio": {
+      "shareAppAudio": "Share app audio only",
+      "shareSystemAudio": "Share all system audio (includes voice chat)"
+    },
+    "thumbnailLoading": "Loading…",
+    "buttons": {
+      "cancel": "Cancel",
+      "share": "Share"
+    }
+  },
+
+  "e2eeSetupModal": {
+    "setupTitle": "Set Up Encryption",
+    "hasBackupDescription": "A server backup of your encryption keys was found. Restore your keys to decrypt previous messages, or generate new keys.",
+    "noBackupDescription": "End-to-end encryption requires keys on this device. Generate new keys to get started.",
+    "backupPassphrasePlaceholder": "Backup passphrase",
+    "buttons": {
+      "generateNew": "Generate New Keys",
+      "restore": "Restore Keys",
+      "cancel": "Cancel",
+      "generate": "Generate Keys"
+    },
+    "confirmRegenerate": {
+      "title": "Generate New Keys?",
+      "description": "This will create new encryption keys. Messages encrypted with your previous keys will be unreadable on this device.",
+      "cancel": "Cancel",
+      "confirm": "I understand, generate new keys"
+    },
+    "processing": "Setting up encryption keys...",
+    "toasts": {
+      "restored": "Encryption keys restored from server backup",
+      "generated": "Encryption keys generated. Back up your keys in Settings > Encryption."
+    },
+    "errors": {
+      "enterPassphrase": "Please enter your backup passphrase"
+    }
+  },
+
+  "modView": {
+    "loading": "Loading...",
+    "navigation": {
+      "goBack": "Go back"
+    },
+    "header": {
+      "kick": "Kick",
+      "ban": "Ban",
+      "unban": "Unban",
+      "assignRole": "Assign Role",
+      "removeRole": {
+        "title": "Remove Role",
+        "message": "Are you sure you want to remove the role \"{{roleName}}\" from this user?",
+        "confirm": "Remove"
+      },
+      "kickDialog": {
+        "title": "Kick User",
+        "message": "Please provide a reason for kicking this user (optional).",
+        "confirm": "Kick"
+      },
+      "banDialog": {
+        "title": "Ban User",
+        "message": "Please provide a reason for banning this user (optional).",
+        "confirm": "Ban"
+      },
+      "unbanDialog": {
+        "title": "Unban User",
+        "message": "Are you sure you want to unban this user?",
+        "confirm": "Unban"
+      },
+      "toasts": {
+        "kicked": "User kicked successfully",
+        "failedKick": "Failed to kick user",
+        "banned": "User banned successfully",
+        "failedBan": "Failed to ban user",
+        "unbanned": "User unbanned successfully",
+        "failedUnban": "Failed to unban user",
+        "roleRemoved": "Role removed successfully",
+        "failedRemoveRole": "Failed to remove role"
+      }
+    },
+    "serverActivity": {
+      "title": "Server Activity",
+      "messages": "Messages",
+      "links": "Links",
+      "files": "Files"
+    },
+    "details": {
+      "title": "Details",
+      "userId": "User ID",
+      "identity": "Identity",
+      "ipAddress": "IP Address",
+      "location": "Location",
+      "joinedServer": "Joined Server",
+      "lastActive": "Last Active",
+      "banned": "Banned",
+      "banReason": "Ban Reason",
+      "bannedAt": "Banned At",
+      "yes": "Yes",
+      "unknown": "Unknown",
+      "noReasonProvided": "No reason provided"
+    }
+  },
+
+  "userControl": {
+    "userSettings": "User settings",
+    "voiceSettings": "Voice Settings"
+  },
+
+  "rightSidebar": {
+    "online": "Online",
+    "offline": "Offline"
+  },
+
+  "userPopover": {
+    "thisBanned": "This user is banned",
+    "roles": "Roles",
+    "aboutMe": "About Me",
+    "notes": "Notes",
+    "noNotesYet": "No notes yet",
+    "add": "Add",
+    "memberSince": "Member Since",
+    "messageAt": "Message @{{name}}",
+    "editNickname": "Edit Nickname",
+    "setNickname": "Set Nickname",
+    "setNicknameMessage": "Nickname for this server (leave empty to clear)",
+    "addNote": "Add Note",
+    "addNoteMessage": "Note about {{name}}",
+    "copyUserId": "Copy User ID",
+    "moderationView": "Moderation View",
+    "federatedFrom": "Federated from",
+    "endToEndEncrypted": "End-to-end encrypted",
+    "removeFriend": "Remove Friend",
+    "addFriend": "Add Friend",
+    "toasts": {
+      "noteSaved": "Note saved",
+      "failedSaveNote": "Failed to save note",
+      "noteDeleted": "Note deleted",
+      "failedDeleteNote": "Failed to delete note",
+      "nicknameUpdated": "Nickname updated",
+      "nicknameCleared": "Nickname cleared",
+      "failedUpdateNickname": "Failed to update nickname",
+      "failedSendMessage": "Failed to send message",
+      "friendRequestSent": "Friend request sent",
+      "failedFriendRequest": "Failed to send friend request",
+      "friendRemoved": "Friend removed",
+      "failedRemoveFriend": "Failed to remove friend",
+      "userIdCopied": "User ID copied"
+    }
+  },
+
+  "dm": {
+    "searchMessages": "Search Messages",
+    "pinnedMessages": "Pinned Messages",
+    "startCall": "Start Call",
+    "joinCall": "Join Call",
+    "leaveCall": "Leave Call"
+  },
+
+  "keyboard": {
+    "title": "Keyboard Shortcuts",
+    "groups": {
+      "navigation": "Navigation",
+      "voice": "Voice"
+    },
+    "shortcuts": {
+      "toggleSearch": "Toggle search",
+      "showShortcuts": "Show keyboard shortcuts",
+      "toggleMic": "Toggle microphone",
+      "toggleDeafen": "Toggle deafen"
+    }
+  },
+
+  "reconnecting": {
+    "banner": "Reconnecting...",
+    "bannerWithAttempt": "Reconnecting (attempt {{attempt}})..."
+  },
+
+  "disconnected": {
+    "kicked": {
+      "title": "You have been kicked",
+      "defaultMessage": "No reason provided."
+    },
+    "banned": {
+      "title": "You have been banned",
+      "defaultMessage": "No reason provided."
+    },
+    "connectionLost": {
+      "title": "Connection lost",
+      "message": "Lost connection to the server unexpectedly."
+    },
+    "reconnectButton": "Reconnect",
+    "details": {
+      "label": "Details",
+      "code": "Code: {{code}}",
+      "time": "Time: {{time}}"
+    }
+  }
+}

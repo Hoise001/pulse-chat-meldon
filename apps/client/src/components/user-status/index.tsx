@@ -1,5 +1,6 @@
 import { cn } from '@/lib/utils';
 import { UserStatus } from '@pulse/shared';
+import i18n from 'i18next';
 import { MinusCircle, Moon } from 'lucide-react';
 import { memo } from 'react';
 
@@ -10,17 +11,16 @@ type TUserStatusBadgeProps = {
 
 const statusConfig: Record<
   UserStatus,
-  { color: string; label: string; icon?: 'moon' | 'dnd' }
+  { color: string; icon?: 'moon' | 'dnd' }
 > = {
-  [UserStatus.ONLINE]: { color: 'bg-emerald-500', label: 'Online' },
-  [UserStatus.IDLE]: { color: 'bg-amber-400', label: 'Idle', icon: 'moon' },
+  [UserStatus.ONLINE]: { color: 'bg-emerald-500' },
+  [UserStatus.IDLE]: { color: 'bg-amber-400', icon: 'moon' },
   [UserStatus.DND]: {
     color: 'bg-rose-500',
-    label: 'Do Not Disturb',
     icon: 'dnd'
   },
-  [UserStatus.INVISIBLE]: { color: 'bg-gray-500', label: 'Invisible' },
-  [UserStatus.OFFLINE]: { color: 'bg-gray-500', label: 'Offline' }
+  [UserStatus.INVISIBLE]: { color: 'bg-gray-500' },
+  [UserStatus.OFFLINE]: { color: 'bg-gray-500' }
 };
 
 const UserStatusBadge = memo(({ status, className }: TUserStatusBadgeProps) => {
@@ -70,7 +70,7 @@ const UserStatusBadge = memo(({ status, className }: TUserStatusBadgeProps) => {
 });
 
 const getStatusLabel = (status: UserStatus): string => {
-  return statusConfig[status]?.label || 'Offline';
+  return i18n.t(`common.status.${status}`);
 };
 
 // eslint-disable-next-line react-refresh/only-export-components

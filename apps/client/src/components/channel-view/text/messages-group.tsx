@@ -11,6 +11,7 @@ import type { TJoinedMessage } from '@pulse/shared';
 import { dateTime, fullDateTime, timeOnly } from '@/helpers/time-format';
 import { format, isToday, isYesterday } from 'date-fns';
 import { memo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Tooltip } from '../../ui/tooltip';
 import { Message } from './message';
 import { MessageErrorBoundary } from './message-error-boundary';
@@ -27,6 +28,7 @@ const spacingMap = {
 } as const;
 
 const MessagesGroup = memo(({ group, onReply }: TMessagesGroupProps) => {
+  const { t } = useTranslation();
   const firstMessage = group[0];
   const user = useUserById(firstMessage.userId);
   const date = new Date(firstMessage.createdAt);
@@ -51,9 +53,9 @@ const MessagesGroup = memo(({ group, onReply }: TMessagesGroupProps) => {
       : undefined;
 
   const timeStr = isToday(date)
-    ? `Today at ${format(date, timeOnly())}`
+    ? t('chat.today', { time: format(date, timeOnly()) })
     : isYesterday(date)
-      ? `Yesterday at ${format(date, timeOnly())}`
+      ? t('chat.yesterday', { time: format(date, timeOnly()) })
       : format(date, dateTime());
 
   if (compactMode) {

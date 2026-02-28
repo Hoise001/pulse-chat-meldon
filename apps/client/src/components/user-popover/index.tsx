@@ -26,7 +26,9 @@ import {
   UserPlus,
   X
 } from 'lucide-react';
+import i18n from 'i18next';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { Protect } from '../protect';
 import { RoleBadge } from '../role-badge';
@@ -55,6 +57,7 @@ type TUserPopoverProps = {
 };
 
 const UserPopover = memo(({ userId, children }: TUserPopoverProps) => {
+  const { t } = useTranslation();
   const user = useUserById(userId);
   const roles = useUserRoles(userId);
   const ownUserId = useOwnUserId();
@@ -106,23 +109,23 @@ const UserPopover = memo(({ userId, children }: TUserPopoverProps) => {
 
   const handleAddNote = useCallback(async () => {
     const text = await requestTextInput({
-      title: 'Add Note',
-      message: `Note about ${user?.name ?? 'this user'}`,
-      confirmLabel: 'Save',
-      cancelLabel: 'Cancel'
+      title: t('userPopover.addNote'),
+      message: t('userPopover.addNoteMessage', { name: user?.name ?? 'this user' }),
+      confirmLabel: t('common.save'),
+      cancelLabel: t('common.cancel')
     });
 
     if (text) {
       try {
         const trpc = getTRPCClient();
         await trpc.notes.add.mutate({ targetUserId: userId, content: text });
-        toast.success('Note saved');
+        toast.success(t('userPopover.toasts.noteSaved'));
         fetchNotes();
       } catch {
-        toast.error('Failed to save note');
+        toast.error(t('userPopover.toasts.failedSaveNote'));
       }
     }
-  }, [userId, user, fetchNotes]);
+  }, [userId, user, fetchNotes, t]);
 
   const handleDeleteNote = useCallback(
     async (noteId: number) => {
@@ -130,12 +133,12 @@ const UserPopover = memo(({ userId, children }: TUserPopoverProps) => {
         const trpc = getTRPCClient();
         await trpc.notes.delete.mutate({ noteId });
         setNotes((prev) => prev.filter((n) => n.id !== noteId));
-        toast.success('Note deleted');
+        toast.success(t('userPopover.toasts.noteDeleted'));
       } catch {
-        toast.error('Failed to delete note');
+        toast.error(t('userPopover.toasts.failedDeleteNote'));
       }
     },
-    []
+    [t]
   );
 
   const resolveLocalUserId = useCallback(async (): Promise<number> => {
@@ -167,36 +170,36 @@ const UserPopover = memo(({ userId, children }: TUserPopoverProps) => {
         setActiveView('home');
       }
     } catch {
-      toast.error('Failed to send message');
+      toast.error(t('userPopover.toasts.failedSendMessage'));
     }
-  }, [resolveLocalUserId, popoverMessage]);
+  }, [resolveLocalUserId, popoverMessage, t]);
 
   const handleAddFriend = useCallback(async () => {
     try {
       const localId = await resolveLocalUserId();
       await sendFriendRequest(localId);
-      toast.success('Friend request sent');
+      toast.success(t('userPopover.toasts.friendRequestSent'));
     } catch {
-      toast.error('Failed to send friend request');
+      toast.error(t('userPopover.toasts.failedFriendRequest'));
     }
-  }, [resolveLocalUserId]);
+  }, [resolveLocalUserId, t]);
 
   const handleRemoveFriend = useCallback(async () => {
     try {
       const localId = await resolveLocalUserId();
       await removeFriendAction(localId);
-      toast.success('Friend removed');
+      toast.success(t('userPopover.toasts.friendRemoved'));
     } catch {
-      toast.error('Failed to remove friend');
+      toast.error(t('userPopover.toasts.failedRemoveFriend'));
     }
-  }, [resolveLocalUserId]);
+  }, [resolveLocalUserId, t]);
 
   const handleEditNickname = useCallback(async () => {
     const text = await requestTextInput({
-      title: 'Set Nickname',
-      message: 'Nickname for this server (leave empty to clear)',
-      confirmLabel: 'Save',
-      cancelLabel: 'Cancel',
+      title: t('userPopover.setNickname'),
+      message: t('userPopover.setNicknameMessage'),
+      confirmLabel: t('common.save'),
+      cancelLabel: t('common.cancel'),
       defaultValue: user?.nickname ?? '',
       allowEmpty: true
     });
@@ -210,12 +213,12 @@ const UserPopover = memo(({ userId, children }: TUserPopoverProps) => {
         } else {
           await trpc.users.setUserNickname.mutate({ userId, nickname });
         }
-        toast.success(nickname ? 'Nickname updated' : 'Nickname cleared');
+        toast.success(nickname ? t('userPopover.toasts.nicknameUpdated') : t('userPopover.toasts.nicknameCleared'));
       } catch {
-        toast.error('Failed to update nickname');
+        toast.error(t('userPopover.toasts.failedUpdateNickname'));
       }
     }
-  }, [userId, user, isOwnUser]);
+  }, [userId, user, isOwnUser, t]);
 
   if (!user) return <>{children}</>;
 
@@ -255,7 +258,7 @@ const UserPopover = memo(({ userId, children }: TUserPopoverProps) => {
                 type="button"
                 className="h-8 w-8 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-background transition-colors"
                 onClick={isFriend ? handleRemoveFriend : handleAddFriend}
-                title={isFriend ? 'Remove Friend' : 'Add Friend'}
+                title={isFriend ? t('userPopover.removeFriend') : t('userPopover.addFriend')}
               >
                 {isFriend ? (
                   <UserMinus className="h-4 w-4" />
@@ -329,7 +332,7 @@ const UserPopover = memo(({ userId, children }: TUserPopoverProps) => {
             <div className="flex items-center gap-1 mt-0.5">
               <Globe className="h-3 w-3 text-blue-500" />
               <span className="text-xs text-blue-500">
-                Federated from{' '}
+                {t('userPopover.federatedFrom')}{' '}
                 {user._identity.split('@').slice(1).join('@')}
               </span>
             </div>
@@ -340,7 +343,7 @@ const UserPopover = memo(({ userId, children }: TUserPopoverProps) => {
               className="h-3 w-3"
             />
             <span className="text-xs text-muted-foreground capitalize">
-              {user.status || UserStatus.OFFLINE}
+              {i18n.t(`common.status.${user.status || UserStatus.OFFLINE}`)}
             </span>
           </div>
         </div>
@@ -350,14 +353,14 @@ const UserPopover = memo(({ userId, children }: TUserPopoverProps) => {
           {user.banned && (
             <div className="flex items-center gap-1.5 text-red-500 bg-red-500/10 rounded-md px-2 py-1.5">
               <ShieldCheck className="h-3.5 w-3.5" />
-              <span className="text-xs font-medium">This user is banned</span>
+              <span className="text-xs font-medium">{t('userPopover.thisBanned')}</span>
             </div>
           )}
 
           {roles.length > 0 && (
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
-                Roles
+                {t('userPopover.roles')}
               </p>
               <div className="flex flex-wrap gap-1">
                 {roles.map((role) => (
@@ -370,7 +373,7 @@ const UserPopover = memo(({ userId, children }: TUserPopoverProps) => {
           {user.bio && (
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">
-                About Me
+                {t('userPopover.aboutMe')}
               </p>
               <p className="text-sm text-foreground leading-relaxed">
                 {user.bio}
@@ -382,14 +385,14 @@ const UserPopover = memo(({ userId, children }: TUserPopoverProps) => {
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Notes
+                  {t('userPopover.notes')}
                 </p>
                 <button
                   className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
                   onClick={handleAddNote}
                 >
                   <Plus className="h-3 w-3" />
-                  Add
+                  {t('userPopover.add')}
                 </button>
               </div>
               {notes.length > 0 ? (
@@ -420,7 +423,7 @@ const UserPopover = memo(({ userId, children }: TUserPopoverProps) => {
                 </div>
               ) : (
                 <p className="text-xs text-muted-foreground italic">
-                  No notes yet
+                  {t('userPopover.noNotesYet')}
                 </p>
               )}
             </div>
@@ -428,7 +431,7 @@ const UserPopover = memo(({ userId, children }: TUserPopoverProps) => {
 
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">
-              Member Since
+              {t('userPopover.memberSince')}
             </p>
             <p className="text-xs text-muted-foreground">
               {format(new Date(user.createdAt), 'PP')}
@@ -448,7 +451,7 @@ const UserPopover = memo(({ userId, children }: TUserPopoverProps) => {
             >
               <TiptapInput
                 value={popoverMessage}
-                placeholder={`Message @${user.name}`}
+                placeholder={t('userPopover.messageAt', { name: user.name })}
                 onChange={setPopoverMessage}
                 onSubmit={handleSendPopoverMessage}
               />

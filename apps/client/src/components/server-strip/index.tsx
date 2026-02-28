@@ -72,6 +72,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Compass, Home, Plus, Volume2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { memo, useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import type { TServerSummary } from '@pulse/shared';
@@ -243,6 +244,7 @@ const SortableServerItem = memo(
 );
 
 const ServerStrip = memo(() => {
+  const { t } = useTranslation();
   const activeView = useActiveView();
   const friendRequests = useFriendRequests();
   const ownUserId = useOwnUserId();
@@ -468,7 +470,7 @@ const ServerStrip = memo(() => {
                   ? 'bg-primary text-primary-foreground rounded-xl'
                   : 'bg-secondary text-muted-foreground hover:bg-primary hover:text-primary-foreground hover:rounded-xl'
               )}
-              title="Home"
+              title={t('home.title')}
             >
               <Home className="h-6 w-6" />
               {(pendingCount > 0 || totalDmUnreadCount > 0) && (
@@ -562,16 +564,16 @@ const ServerStrip = memo(() => {
                           }
                         >
                           <ContextMenuRadioItem value="all">
-                            All Messages
+                            {t('topBar.notificationLevels.all')}
                           </ContextMenuRadioItem>
                           <ContextMenuRadioItem value="mentions">
-                            Only @Mentions
+                            {t('topBar.notificationLevels.mentions')}
                           </ContextMenuRadioItem>
                           <ContextMenuRadioItem value="nothing">
-                            Nothing
+                            {t('topBar.notificationLevels.nothing')}
                           </ContextMenuRadioItem>
                           <ContextMenuRadioItem value="default">
-                            Default
+                            {t('topBar.notificationLevels.default')}
                           </ContextMenuRadioItem>
                         </ContextMenuRadioGroup>
                       </ContextMenuSubContent>
@@ -582,14 +584,14 @@ const ServerStrip = memo(() => {
                         variant="destructive"
                         onClick={() => setDeleteTarget(server)}
                       >
-                        Delete Server
+                        {t('server.dropdown.deleteServer')}
                       </ContextMenuItem>
                     ) : (
                       <ContextMenuItem
                         variant="destructive"
                         onClick={() => handleLeaveServer(server.id)}
                       >
-                        Leave Server
+                        {t('server.dropdown.leaveServer')}
                       </ContextMenuItem>
                     )}
                   </ContextMenuContent>
@@ -648,7 +650,7 @@ const ServerStrip = memo(() => {
       <button
         onClick={handleCreateServer}
         className="flex h-12 w-12 items-center justify-center rounded-2xl bg-secondary text-primary transition-all duration-200 hover:bg-primary hover:text-primary-foreground hover:rounded-xl"
-        title="Create Server"
+        title={t('server.createServer')}
       >
         <Plus className="h-6 w-6" />
       </button>
@@ -666,7 +668,7 @@ const ServerStrip = memo(() => {
               ? 'bg-primary text-primary-foreground rounded-xl'
               : 'bg-secondary text-primary hover:bg-primary hover:text-primary-foreground hover:rounded-xl'
           )}
-          title="Discover Servers"
+          title={t('discover.title')}
         >
           <Compass className="h-6 w-6" />
         </button>
@@ -687,8 +689,7 @@ const ServerStrip = memo(() => {
               ? 'rounded-xl ring-2 ring-primary'
               : 'hover:rounded-xl hover:ring-2 hover:ring-primary'
           )}
-          title="FoundryVTT"
-        >
+          title={t('foundry.title')}>
           <img src="/foundry_icon.png" className="h-full w-full object-cover" alt="FoundryVTT" />
         </button>
       </div>
@@ -699,21 +700,18 @@ const ServerStrip = memo(() => {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Server</AlertDialogTitle>
+            <AlertDialogTitle>{t('server.confirmDelete.title')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete{' '}
-              <strong>{deleteTarget?.name}</strong>? This action cannot be
-              undone. All channels, messages, and data will be permanently
-              removed.
+              {t('server.confirmDelete.message', { name: deleteTarget?.name })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={handleConfirmDelete}
             >
-              Delete
+              {t('server.confirmDelete.confirm')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

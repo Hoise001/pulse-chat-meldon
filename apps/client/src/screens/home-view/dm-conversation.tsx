@@ -64,6 +64,7 @@ import {
   setLocalStorageItemAsJSON
 } from '@/helpers/storage';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Tooltip } from '@/components/ui/tooltip';
@@ -80,6 +81,7 @@ type TDmConversationProps = {
 };
 
 const DmConversation = memo(({ dmChannelId }: TDmConversationProps) => {
+  const { t } = useTranslation();
   const { messages, loading, fetching, hasMore, loadMore, groupedMessages } =
     useDmMessages(dmChannelId);
   const [newMessage, setNewMessage] = useState('');
@@ -450,6 +452,7 @@ const DmTypingNames = memo(({ userIds }: { userIds: number[] }) => {
 });
 
 const DmHeader = memo(({ dmChannelId }: { dmChannelId: number }) => {
+  const { t } = useTranslation();
   const channels = useDmChannels();
   const ownUserId = useOwnUserId();
   const call = useDmCall(dmChannelId);
@@ -535,7 +538,7 @@ const DmHeader = memo(({ dmChannelId }: { dmChannelId: number }) => {
         size="icon"
         className="h-8 w-8"
         onClick={() => { setShowSearch(!showSearch); setShowPinned(false); }}
-        title="Search Messages"
+        title={t('dm.searchMessages')}
       >
         <Search className="h-4 w-4" />
       </Button>
@@ -544,7 +547,7 @@ const DmHeader = memo(({ dmChannelId }: { dmChannelId: number }) => {
         size="icon"
         className="h-8 w-8"
         onClick={() => { setShowPinned(!showPinned); setShowSearch(false); }}
-        title="Pinned Messages"
+        title={t('dm.pinnedMessages')}
       >
         <Pin className="h-4 w-4" />
       </Button>
@@ -554,7 +557,7 @@ const DmHeader = memo(({ dmChannelId }: { dmChannelId: number }) => {
           size="icon"
           className="h-8 w-8 text-destructive hover:text-destructive"
           onClick={handleEndCall}
-          title="Leave Call"
+          title={t('dm.leaveCall')}
         >
           <PhoneOff className="h-4 w-4" />
         </Button>
@@ -565,7 +568,7 @@ const DmHeader = memo(({ dmChannelId }: { dmChannelId: number }) => {
           className="h-8 w-8"
           onClick={handleStartCall}
           disabled={!!ownDmCallChannelId}
-          title={hasActiveCall ? 'Join Call' : 'Start Call'}
+          title={hasActiveCall ? t('dm.joinCall') : t('dm.startCall')}
         >
           <Phone className="h-4 w-4" />
         </Button>
@@ -594,6 +597,7 @@ const DmPinnedMessagesPanel = memo(
     dmChannelId: number;
     onClose: () => void;
   }) => {
+    const { t } = useTranslation();
     const [pinnedMessages, setPinnedMessages] = useState<TJoinedDmMessage[]>(
       []
     );
@@ -646,7 +650,7 @@ const DmPinnedMessagesPanel = memo(
         <div className="flex items-center justify-between p-3 border-b border-border/30 sticky top-0 bg-popover z-10">
           <div className="flex items-center gap-2">
             <Pin className="w-4 h-4" />
-            <span className="text-sm font-medium">Pinned Messages</span>
+            <span className="text-sm font-medium">{t('dm.pinnedMessages')}</span>
           </div>
           <Button
             variant="ghost"

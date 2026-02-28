@@ -15,12 +15,14 @@ import { datePlusTime } from '@/helpers/time-format';
 import { format, formatDistanceToNow } from 'date-fns';
 import { MoreVertical, UserCog } from 'lucide-react';
 import { memo, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 
 type TTableUserProps = {
   user: TJoinedUser;
 };
 
 const TableUser = memo(({ user }: TTableUserProps) => {
+  const { t } = useTranslation();
   const roles = useUserRoles(user.id);
   const status = useUserStatus(user.id);
 
@@ -82,7 +84,9 @@ const TableUser = memo(({ user }: TTableUserProps) => {
             'text-yellow-500': status === UserStatus.IDLE
           })}
         >
-          {status}
+          {status === UserStatus.ONLINE
+            ? t('serverSettings.users.status.online')
+            : t('serverSettings.users.status.offline')}
         </span>
       </div>
 
@@ -100,7 +104,7 @@ const TableUser = memo(({ user }: TTableUserProps) => {
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={onModerateClick}>
               <UserCog className="h-4 w-4" />
-              Moderate User
+              {t('serverSettings.users.moderateUser')}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

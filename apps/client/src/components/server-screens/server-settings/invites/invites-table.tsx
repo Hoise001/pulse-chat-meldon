@@ -1,6 +1,7 @@
 import { PaginatedTable } from '@/components/paginated-table';
 import type { TJoinedInvite } from '@pulse/shared';
 import { memo, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { TableInvite } from './table-invite';
 
 type TInvitesTableProps = {
@@ -9,6 +10,7 @@ type TInvitesTableProps = {
 };
 
 const InvitesTable = memo(({ invites, refetch }: TInvitesTableProps) => {
+  const { t } = useTranslation();
   const searchFilter = useCallback(
     (invite: TJoinedInvite, searchTerm: string) => {
       const query = searchTerm.toLowerCase();
@@ -30,19 +32,19 @@ const InvitesTable = memo(({ invites, refetch }: TInvitesTableProps) => {
       searchFilter={searchFilter}
       headerColumns={
         <>
-          <div>Code</div>
-          <div>Creator</div>
-          <div>Uses</div>
-          <div>Expires</div>
-          <div>Created</div>
-          <div>Status</div>
-          <div>Actions</div>
+          <div>{t('serverSettings.invites.table.code')}</div>
+          <div>{t('serverSettings.invites.table.creator')}</div>
+          <div>{t('serverSettings.invites.table.uses')}</div>
+          <div>{t('serverSettings.invites.table.expires')}</div>
+          <div>{t('serverSettings.invites.table.created')}</div>
+          <div>{t('serverSettings.invites.table.status')}</div>
+          <div>{t('serverSettings.invites.table.actions')}</div>
         </>
       }
       gridCols="grid-cols-[180px_60px_80px_100px_140px_80px_80px]"
       itemsPerPage={8}
-      searchPlaceholder="Search invites by code or creator..."
-      emptyMessage="No invites found"
+      searchPlaceholder={t('serverSettings.invites.searchPlaceholder')}
+      emptyMessage={t('serverSettings.invites.emptyMessage')}
     />
   );
 });

@@ -9,6 +9,7 @@ import type { TJoinedPublicUser } from '@pulse/shared';
 import { UserStatus } from '@pulse/shared';
 import { Globe } from 'lucide-react';
 import { memo, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { UserPopover } from '../user-popover';
 import { UserStatusBadge } from '../user-status';
@@ -105,6 +106,7 @@ type TRightSidebarProps = {
 
 const RightSidebar = memo(
   ({ className, isOpen = true }: TRightSidebarProps) => {
+    const { t } = useTranslation();
     const { groups, offlineUsers } = useSelector(usersGroupedByRoleSelector);
     const selectedChannel = useSelectedChannel();
     const [visibleUserIds, setVisibleUserIds] = useState<Set<number> | null>(
@@ -172,14 +174,14 @@ const RightSidebar = memo(
               {filteredGroups.map((group) => (
                 <RoleGroupSection
                   key={group.role?.id ?? 'online'}
-                  label={group.role?.name ?? 'Online'}
+                  label={group.role?.name ?? t('rightSidebar.online')}
                   color={group.role?.color}
                   users={group.users}
                 />
               ))}
               {filteredOfflineUsers.length > 0 && (
                 <RoleGroupSection
-                  label="Offline"
+                  label={t('rightSidebar.offline')}
                   users={filteredOfflineUsers}
                   dimmed
                 />

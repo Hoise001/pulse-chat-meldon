@@ -12,6 +12,7 @@ import {
   Network
 } from 'lucide-react';
 import { memo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useModViewContext } from '../context';
 
 type TRowProps = {
@@ -44,6 +45,7 @@ const Row = memo(({ icon, label, value, details }: TRowProps) => {
 });
 
 const Details = memo(() => {
+  const { t } = useTranslation();
   const { user, logins } = useModViewContext();
   const lastLogin = logins[0]; // TODO: in the future we might show a list of logins, atm we just show info about the last one
 
@@ -52,44 +54,44 @@ const Details = memo(() => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <ClipboardList className="h-5 w-5" />
-          Details
+          {t('modView.details.title')}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-2">
         <div className="space-y-2">
           <Row
             icon={<IdCard className="h-4 w-4 text-muted-foreground" />}
-            label="User ID"
+            label={t('modView.details.userId')}
             value={user.id}
           />
 
           <Row
             icon={<IdCard className="h-4 w-4 text-muted-foreground" />}
-            label="Identity"
+            label={t('modView.details.identity')}
             value={user.supabaseId}
           />
 
           <Row
             icon={<Network className="h-4 w-4 text-muted-foreground" />}
-            label="IP Address"
-            value={lastLogin?.ip || 'Unknown'}
+            label={t('modView.details.ipAddress')}
+            value={lastLogin?.ip || t('modView.details.unknown')}
           />
 
           <Row
             icon={<Globe className="h-4 w-4 text-muted-foreground" />}
-            label="Location"
+            label={t('modView.details.location')}
             value={`${lastLogin?.country || 'N/A'} - ${lastLogin?.city || 'N/A'}`}
           />
 
           <Row
             icon={<Calendar className="h-4 w-4 text-muted-foreground" />}
-            label="Joined Server"
+            label={t('modView.details.joinedServer')}
             value={formatDistanceToNow(user.createdAt, { addSuffix: true })}
           />
 
           <Row
             icon={<Clock className="h-4 w-4 text-muted-foreground" />}
-            label="Last Active"
+            label={t('modView.details.lastActive')}
             value={formatDistanceToNow(user.lastLoginAt, { addSuffix: true })}
           />
 
@@ -97,19 +99,19 @@ const Details = memo(() => {
             <>
               <Row
                 icon={<Gavel className="h-4 w-4 text-muted-foreground" />}
-                label="Banned"
-                value="Yes"
+                label={t('modView.details.banned')}
+                value={t('modView.details.yes')}
               />
 
               <Row
                 icon={<Gavel className="h-4 w-4 text-muted-foreground" />}
-                label="Ban Reason"
-                value={user.banReason || 'No reason provided'}
+                label={t('modView.details.banReason')}
+                value={user.banReason || t('modView.details.noReasonProvided')}
               />
 
               <Row
                 icon={<Gavel className="h-4 w-4 text-muted-foreground" />}
-                label="Banned At"
+                label={t('modView.details.bannedAt')}
                 value={format(user.bannedAt ?? 0, 'PPP')}
                 details={format(user.bannedAt ?? 0, fullDateTime())}
               />

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -42,6 +43,7 @@ const statusOptions = [
 ] as const;
 
 const UserControl = memo(() => {
+  const { t } = useTranslation();
   const ownPublicUser = useOwnPublicUser();
   const currentVoiceChannelId = useCurrentVoiceChannelId();
   const { ownVoiceState, toggleMic, toggleSound } = useVoice();
@@ -138,8 +140,8 @@ const UserControl = memo(() => {
             onClick={toggleMic}
             title={
               ownVoiceState.micMuted
-                ? 'Unmute microphone (Ctrl+Shift+M)'
-                : 'Mute microphone (Ctrl+Shift+M)'
+                ? t('voice.buttons.micUnmute')
+                : t('voice.buttons.micMute')
             }
             disabled={!channelCan(ChannelPermission.SPEAK)}
           >
@@ -164,7 +166,7 @@ const UserControl = memo(() => {
             </DropdownMenuTrigger>
             <DropdownMenuContent side="top" align="start" className="w-64">
               <DropdownMenuLabel className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
-                Input Device
+                {t('voice.devices.inputDevice')}
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuRadioGroup
@@ -176,14 +178,14 @@ const UserControl = memo(() => {
                     key={device?.deviceId || 'default'}
                     value={device?.deviceId || 'default'}
                   >
-                    {device?.label.trim() || 'Default Microphone'}
+                    {device?.label.trim() || t('voice.devices.defaultMicrophone')}
                   </DropdownMenuRadioItem>
                 ))}
               </DropdownMenuRadioGroup>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={openVoiceSettings}>
                 <Settings className="h-4 w-4" />
-                Voice Settings
+                {t('userControl.voiceSettings')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -203,8 +205,8 @@ const UserControl = memo(() => {
             onClick={toggleSound}
             title={
               ownVoiceState.soundMuted
-                ? 'Undeafen (Ctrl+Shift+D)'
-                : 'Deafen (Ctrl+Shift+D)'
+                ? t('voice.buttons.undeafen')
+                : t('voice.buttons.deafen')
             }
           >
             {ownVoiceState.soundMuted ? (
@@ -228,7 +230,7 @@ const UserControl = memo(() => {
             </DropdownMenuTrigger>
             <DropdownMenuContent side="top" align="start" className="w-64">
               <DropdownMenuLabel className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
-                Output Device
+                {t('voice.devices.outputDevice')}
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuRadioGroup
@@ -240,14 +242,14 @@ const UserControl = memo(() => {
                     key={device?.deviceId || 'default'}
                     value={device?.deviceId || 'default'}
                   >
-                    {device?.label.trim() || 'Default Speaker'}
+                    {device?.label.trim() || t('voice.devices.defaultSpeaker')}
                   </DropdownMenuRadioItem>
                 ))}
               </DropdownMenuRadioGroup>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={openVoiceSettings}>
                 <Settings className="h-4 w-4" />
-                Voice Settings
+                {t('voice.devices.voiceSettings')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -258,7 +260,7 @@ const UserControl = memo(() => {
           size="icon"
           className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted/50"
           onClick={handleSettingsClick}
-          title="User settings"
+          title={t('userControl.userSettings')}
         >
           <Settings className="h-4 w-4" />
         </Button>

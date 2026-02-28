@@ -1,11 +1,10 @@
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import {
-  Permission as EPermission,
-  permissionDescriptions,
-  permissionLabels
+  Permission as EPermission
 } from '@pulse/shared';
 import { memo, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 
 const availablePermissions = Object.values(EPermission);
 
@@ -18,12 +17,13 @@ type TPermissionProps = {
 
 const Permission = memo(
   ({ permission, enabled, onChange, disabled }: TPermissionProps) => {
+    const { t } = useTranslation();
     return (
       <div className="flex items-center justify-between">
         <div className="flex flex-col">
-          <Label>{permissionLabels[permission]}</Label>
+          <Label>{t(`serverSettings.roles.permissionLabels.${permission}`)}</Label>
           <span className="text-sm text-muted-foreground">
-            {permissionDescriptions[permission]}
+            {t(`serverSettings.roles.permissionDescriptions.${permission}`)}
           </span>
         </div>
         <Switch
@@ -44,6 +44,7 @@ type TPermissionListProps = {
 
 const PermissionList = memo(
   ({ permissions, setPermissions, disabled }: TPermissionListProps) => {
+    const { t } = useTranslation();
     const onTogglePermission = useCallback(
       (permission: EPermission) => {
         if (permissions.includes(permission)) {
@@ -57,7 +58,7 @@ const PermissionList = memo(
 
     return (
       <div className="space-y-4">
-        <h3 className="text-sm font-semibold">Permissions</h3>
+        <h3 className="text-sm font-semibold">{t('serverSettings.roles.permissionsHeading')}</h3>
 
         <div className="space-y-3">
           {availablePermissions.map((permission) => (
