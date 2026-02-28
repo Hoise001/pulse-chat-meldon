@@ -451,11 +451,16 @@ const startMicStream = useCallback(async () => {
         });
 
         const newMicTrack = newMicStream.getAudioTracks()[0];
-        if (newMicTrack) {
-          await localAudioProducer.current.replaceTrack({ track: newMicTrack });
+        if (newMicTrack && audioContextRef.current && micGainRef.current) {
+          // Reconnect through the existing GainNode so the mute state (gain=0)
+          // is preserved. The producer already holds dest.stream.getAudioTracks()[0];
+          // replacing it would bypass the gain node and leak audio when muted.
+          if (micSourceRef.current) micSourceRef.current.disconnect();
+          micSourceRef.current = audioContextRef.current.createMediaStreamSource(newMicStream);
+          micSourceRef.current.connect(micGainRef.current);
           localAudioStream?.getAudioTracks().forEach((t) => t.stop());
           setLocalAudioStream(newMicStream);
-          logVoice('Mic restored to original settings');
+          logVoice('Mic restored to original settings via audio graph (mute state preserved)');
         }
       } catch (err) {
         logVoice('Failed to restore mic settings', { error: err });
