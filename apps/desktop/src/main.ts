@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, shell, net, Menu, globalShortcut } from 'electron';
+import { app, BrowserWindow, ipcMain, shell, net, Menu, globalShortcut, webContents } from 'electron';
 import path from 'path';
 import fs from 'fs';
 import { Store } from './lib/store';
@@ -14,6 +14,8 @@ const store = new Store();
 let mainWindow: BrowserWindow | null = null;
 let isQuitting = false;
 let hotkeyWin: BrowserWindow | null = null;
+let streamViewerWin: BrowserWindow | null = null;
+let streamViewerSourceWCId: number | null = null;
 let muteBinding: string[] | null = null;
 let uIOhook: any = null;
 const heldKeys = new Set<string>();
@@ -352,6 +354,78 @@ function setupIpcHandlers(): void {
   });
   ipcMain.on('hotkeys-cancel', () => {
     if (hotkeyWin && !hotkeyWin.isDestroyed()) hotkeyWin.close();
+  });
+
+  // ── Stream viewer window ──────────────────────────────────────────────────
+  ipcMain.handle('stream-viewer:open', async (event, channelId: number) => {
+    streamViewerSourceWCId = event.sender.id;
+
+    if (streamViewerWin && !streamViewerWin.isDestroyed()) {
+      streamViewerWin.focus();
+      return streamViewerWin.webContents.id;
+    }
+
+    const serverUrl = store.get('serverUrl');
+    if (!serverUrl) return null;
+
+    streamViewerWin = new BrowserWindow({
+      fullscreen: true,
+      backgroundColor: '#000000',
+      title: 'Stream Viewer',
+      autoHideMenuBar: true,
+      webPreferences: {
+        preload: PRELOAD_PATH,
+        contextIsolation: true,
+        nodeIntegration: false,
+        autoplayPolicy: 'no-user-gesture-required',
+      },
+    });
+
+    streamViewerWin.on('closed', () => {
+      // Notify the source renderer so it can tear down its RTCPeerConnection
+      if (streamViewerSourceWCId) {
+        const src = webContents.fromId(streamViewerSourceWCId);
+        src?.send('stream-viewer:closed');
+      }
+      streamViewerWin = null;
+      streamViewerSourceWCId = null;
+    });
+
+    const viewerUrl = `${serverUrl}?__svCh=${channelId}`;
+    streamViewerWin.loadURL(viewerUrl);
+
+    return new Promise<number>((resolve) => {
+      streamViewerWin!.webContents.once('dom-ready', () => {
+        resolve(streamViewerWin!.webContents.id);
+      });
+    });
+  });
+
+  ipcMain.handle('stream-viewer:close', () => {
+    streamViewerWin?.close();
+  });
+
+  // Relay WebRTC signaling: source renderer → viewer
+  ipcMain.on('stream-viewer:signal-to-viewer', (_event, data: unknown) => {
+    if (streamViewerWin && !streamViewerWin.isDestroyed()) {
+      streamViewerWin.webContents.send('stream-viewer:signal', data);
+    }
+  });
+
+  // Relay WebRTC signaling: viewer renderer → source
+  ipcMain.on('stream-viewer:signal-to-source', (_event, data: unknown) => {
+    if (streamViewerSourceWCId) {
+      const src = webContents.fromId(streamViewerSourceWCId);
+      src?.send('stream-viewer:signal', data);
+    }
+  });
+
+  // Viewer ready: forward to source so it can send the WebRTC offer
+  ipcMain.on('stream-viewer:viewer-ready', () => {
+    if (streamViewerSourceWCId) {
+      const src = webContents.fromId(streamViewerSourceWCId);
+      src?.send('stream-viewer:viewer-ready');
+    }
   });
 }
 

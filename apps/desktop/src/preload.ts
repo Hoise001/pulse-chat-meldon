@@ -58,6 +58,33 @@ contextBridge.exposeInMainWorld('pulseDesktop', {
     ipcRenderer.on('hotkey:toggle-mute', () => cb());
   },
 
+  // Fullscreen stream viewer window — relays a screen-share MediaStream to a
+  // dedicated BrowserWindow via local WebRTC loopback + IPC signaling.
+  streamViewer: {
+    open: (channelId: number) =>
+      ipcRenderer.invoke('stream-viewer:open', channelId) as Promise<number | null>,
+    close: () => ipcRenderer.invoke('stream-viewer:close'),
+    signalToViewer: (data: unknown) =>
+      ipcRenderer.send('stream-viewer:signal-to-viewer', data),
+    signalToSource: (data: unknown) =>
+      ipcRenderer.send('stream-viewer:signal-to-source', data),
+    onSignal: (cb: (data: unknown) => void) => {
+      ipcRenderer.removeAllListeners('stream-viewer:signal');
+      ipcRenderer.on('stream-viewer:signal', (_e, data) => cb(data));
+    },
+    offSignal: () => ipcRenderer.removeAllListeners('stream-viewer:signal'),
+    sendViewerReady: () => ipcRenderer.send('stream-viewer:viewer-ready'),
+    onViewerReady: (cb: () => void) => {
+      ipcRenderer.removeAllListeners('stream-viewer:viewer-ready');
+      ipcRenderer.on('stream-viewer:viewer-ready', () => cb());
+    },
+    onViewerClosed: (cb: () => void) => {
+      ipcRenderer.removeAllListeners('stream-viewer:closed');
+      ipcRenderer.on('stream-viewer:closed', () => cb());
+    },
+    offViewerClosed: () => ipcRenderer.removeAllListeners('stream-viewer:closed'),
+  },
+
   // Windows screen picker — lets the renderer show a custom source-selection
   // dialog and pass the audio-toggle value back to the main process before
   // getDisplayMedia resolves.

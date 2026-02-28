@@ -55,6 +55,16 @@ const ServerView = memo(() => {
     );
   }, [isVoiceChatSidebarOpen]);
 
+  // Opened by the fullscreen stream overlay's "Open Chat" button
+  useEffect(() => {
+    const handleOpenVoiceChat = () => {
+      setIsVoiceChatSidebarOpen(true);
+      localStorage.setItem(LocalStorageKey.VOICE_CHAT_SIDEBAR_STATE, 'true');
+    };
+    window.addEventListener('open-voice-chat-sidebar', handleOpenVoiceChat);
+    return () => window.removeEventListener('open-voice-chat-sidebar', handleOpenVoiceChat);
+  }, []);
+
   const handleSwipeRight = useCallback(() => {
     if (isMobileMenuOpen || isMobileUsersOpen) {
       setIsMobileMenuOpen(false);

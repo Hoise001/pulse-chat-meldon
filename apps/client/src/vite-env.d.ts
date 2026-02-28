@@ -43,6 +43,30 @@ interface PulseDesktopScreenPicker {
   getSources(): Promise<DesktopCapturerSourceSerialized[]>;
 }
 
+/** Relays a live screen-share stream to a dedicated fullscreen viewer BrowserWindow
+ *  using a local WebRTC loopback peer connection for stream transfer. */
+interface PulseDesktopStreamViewer {
+  /** Open the viewer window for the given voice channel, return its webContentsId. */
+  open(channelId: number): Promise<number | null>;
+  /** Close the viewer window. */
+  close(): Promise<void>;
+  /** Source renderer → viewer: send WebRTC signaling data. */
+  signalToViewer(data: unknown): void;
+  /** Viewer renderer → source: send WebRTC signaling data. */
+  signalToSource(data: unknown): void;
+  /** Register a handler for incoming signaling data from the other side. */
+  onSignal(cb: (data: unknown) => void): void;
+  /** Remove the signal handler. */
+  offSignal(): void;
+  /** Viewer calls this when its RTCPeerConnection is ready to receive an offer. */
+  sendViewerReady(): void;
+  /** Source calls this to wait for the viewer to signal readiness. */
+  onViewerReady(cb: () => void): void;
+  /** Fired in the source renderer when the viewer window has been closed. */
+  onViewerClosed(cb: () => void): void;
+  offViewerClosed(): void;
+}
+
 /** Windows process-loopback audio capture (Win10 build 20348 / Win11+). */
 interface PulseDesktopWinProcessAudio {
   canCapture(): Promise<boolean>;
@@ -68,6 +92,8 @@ interface PulseDesktop {
   winProcessAudio?: PulseDesktopWinProcessAudio;
   /** Desktop global-hotkey event — register a callback to toggle mic. */
   onToggleMute?(cb: () => void): void;
+  /** Fullscreen stream viewer window (Electron only). */
+  streamViewer?: PulseDesktopStreamViewer;
 }
 
 // Extend the Window interface for global functions

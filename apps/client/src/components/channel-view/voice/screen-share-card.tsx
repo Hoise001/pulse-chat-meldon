@@ -1,8 +1,9 @@
 import { IconButton } from '@/components/ui/icon-button';
 import { useUserById } from '@/features/server/users/hooks';
 import { cn } from '@/lib/utils';
-import { Monitor, ZoomIn, ZoomOut } from 'lucide-react';
-import { memo, useCallback } from 'react';
+import { Maximize2, Monitor, ZoomIn, ZoomOut } from 'lucide-react';
+import { memo, useCallback, useState } from 'react';
+import { FullscreenStreamOverlay } from './fullscreen-stream-overlay';
 import { CardControls } from './card-controls';
 import { CardGradient } from './card-gradient';
 import { useScreenShareZoom } from './hooks/use-screen-share-zoom';
@@ -14,6 +15,7 @@ type tScreenShareControlsProps = {
   isZoomEnabled: boolean;
   handlePinToggle: () => void;
   handleToggleZoom: () => void;
+  handleFullscreen: () => void;
   showPinControls: boolean;
 };
 
@@ -23,6 +25,7 @@ const ScreenShareControls = memo(
     isZoomEnabled,
     handlePinToggle,
     handleToggleZoom,
+    handleFullscreen,
     showPinControls
   }: tScreenShareControlsProps) => {
     return (
@@ -36,6 +39,13 @@ const ScreenShareControls = memo(
             size="sm"
           />
         )}
+        <IconButton
+          variant="ghost"
+          icon={Maximize2}
+          onClick={handleFullscreen}
+          title="Open fullscreen"
+          size="sm"
+        />
         {showPinControls && (
           <PinButton isPinned={isPinned} handlePinToggle={handlePinToggle} />
         )}
@@ -80,6 +90,8 @@ const ScreenShareCard = memo(
       resetZoom
     } = useScreenShareZoom();
 
+    const [isFullscreen, setIsFullscreen] = useState(false);
+
     const handlePinToggle = useCallback(() => {
       if (isPinned) {
         onUnpin?.();
@@ -88,6 +100,14 @@ const ScreenShareCard = memo(
         onPin?.();
       }
     }, [isPinned, onPin, onUnpin, resetZoom]);
+
+    const handleFullscreen = useCallback(() => {
+      setIsFullscreen(true);
+    }, []);
+
+    const handleCloseFullscreen = useCallback(() => {
+      setIsFullscreen(false);
+    }, []);
 
     if (!user || !hasScreenShareStream) return null;
 
@@ -117,8 +137,16 @@ const ScreenShareCard = memo(
           isZoomEnabled={isZoomEnabled}
           handlePinToggle={handlePinToggle}
           handleToggleZoom={handleToggleZoom}
+          handleFullscreen={handleFullscreen}
           showPinControls={showPinControls}
         />
+
+        {isFullscreen && (
+          <FullscreenStreamOverlay
+            userId={userId}
+            onClose={handleCloseFullscreen}
+          />
+        )}
 
         <video
           ref={screenShareRef}
