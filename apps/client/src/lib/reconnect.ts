@@ -123,6 +123,26 @@ export const stopReconnecting = () => {
   window.removeEventListener('online', onOnline);
 };
 
+/**
+ * Cancels the reconnect timer and marks the module as no longer reconnecting
+ * WITHOUT dispatching the Redux setReconnecting(false) action.
+ *
+ * Use this when you want to immediately prevent new reconnect attempts from
+ * firing (e.g. on WS onOpen) but still want the "reconnecting" banner to
+ * remain visible in the UI while an async re-auth operation completes.
+ * Call stopReconnecting() after the auth succeeds to clear the Redux state.
+ */
+export const cancelReconnectTimer = () => {
+  if (!isReconnecting) return;
+  isReconnecting = false;
+  attemptCount = 0;
+  if (reconnectTimer) {
+    clearTimeout(reconnectTimer);
+    reconnectTimer = null;
+  }
+  window.removeEventListener('online', onOnline);
+};
+
 /** When the browser comes back online, try immediately. */
 const onOnline = () => {
   if (!isReconnecting) return;

@@ -42,6 +42,12 @@ const GLOBAL_VOLUME = 0.4;
  * Main function to play application sounds.
  * Replaces the old Web Audio API oscillators with custom MP3s.
  */
+/** Release the WebMediaPlayer held by an Audio element. */
+const releaseAudio = (audio: HTMLAudioElement) => {
+  audio.src = '';
+  audio.load();
+};
+
 export const playSound = (type: SoundType) => {
   const filePath = SOUND_MAP[type];
   if (!filePath) {
@@ -49,6 +55,12 @@ export const playSound = (type: SoundType) => {
   }
   const audio = new Audio(filePath);
   audio.volume = GLOBAL_VOLUME;
+
+  // Free the WebMediaPlayer slot as soon as the sound finishes (or errors).
+  // Without this every new Audio() holds a slot indefinitely; Chromium caps
+  // the total at ~75 which causes intervening media to fail.
+  audio.addEventListener('ended', () => releaseAudio(audio), { once: true });
+  audio.addEventListener('error', () => releaseAudio(audio), { once: true });
 
   // During system audio capture / loopback, route sounds to the designated
   // device (e.g. 'communications' on Windows, real output on macOS) so they
@@ -78,6 +90,8 @@ export const playSoundForPreview = (soundType: SoundType) => {
   if (!filePath) return;
   const audio = new Audio(filePath);
   audio.volume = GLOBAL_VOLUME;
+  audio.addEventListener('ended', () => releaseAudio(audio), { once: true });
+  audio.addEventListener('error', () => releaseAudio(audio), { once: true });
   audio.play().catch((error) => {
     console.debug("Preview playback prevented:", error.message);
   });

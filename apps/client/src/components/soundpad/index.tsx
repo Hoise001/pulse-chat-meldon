@@ -7,10 +7,12 @@ import { ChannelPermission } from '@pulse/shared';
 import { Volume2 } from 'lucide-react';
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
+import { useTranslation } from 'react-i18next';
 
 type Sound = { name: string; file: string };
 
 export const Soundpad = () => {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [sounds, setSounds] = useState<Sound[]>([]);
   const [playing, setPlaying] = useState<string | null>(null);
@@ -39,7 +41,11 @@ export const Soundpad = () => {
   }, []);
 
   const playSound = async (file: string) => {
-    if (audioRef.current) audioRef.current.pause();
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.src = '';
+      audioRef.current.load();
+    }
     const soundPath = activeServerId
       ? `/public/soundpad/${activeServerId}/${file}`
       : `/public/soundpad/${file}`;
@@ -48,7 +54,11 @@ export const Soundpad = () => {
     audio.play();
     audioRef.current = audio;
     setPlaying(file);
-    audio.onended = () => setPlaying(null);
+    audio.onended = () => {
+      audio.src = '';
+      audio.load();
+      setPlaying(null);
+    };
     await playSoundpadAudio(file, activeServerId ?? undefined);
   };
 
@@ -66,7 +76,7 @@ export const Soundpad = () => {
             : 'bg-secondary hover:bg-secondary/80 text-muted-foreground hover:text-foreground'
         }`}
         onClick={handleOpen}
-        title="Soundpad"
+        title={t('soundpad.buttonTitle')}
       >
         <Volume2 className="h-4 w-4" />
       </Button>
@@ -76,9 +86,9 @@ export const Soundpad = () => {
           className="fixed w-64 bg-popover border border-border rounded-lg shadow-lg p-3 z-[9999]"
           style={{ top: popupPos.top, left: popupPos.left }}
         >
-          <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">Soundpad</p>
+          <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">{t('soundpad.title')}</p>
           {sounds.length === 0 ? (
-            <p className="text-xs text-muted-foreground">No sounds available.</p>
+            <p className="text-xs text-muted-foreground">{t('soundpad.noSounds')}</p>
           ) : (
             <div className="grid grid-cols-2 gap-1.5 max-h-60 overflow-y-auto">
               {sounds.map(sound => (

@@ -11,7 +11,7 @@ import {
 import { store } from '@/features/store';
 import { getAccessToken, supabase } from '@/lib/supabase';
 import { connectionManager } from '@/lib/connection-manager';
-import { startReconnecting, stopReconnecting, isCurrentlyReconnecting } from '@/lib/reconnect';
+import { startReconnecting, stopReconnecting, cancelReconnectTimer, isCurrentlyReconnecting } from '@/lib/reconnect';
 import { DisconnectCode, type AppRouter, type TConnectionParams } from '@pulse/shared';
 import { createTRPCProxyClient, createWSClient, wsLink } from '@trpc/client';
 
@@ -85,7 +85,14 @@ const initializeTRPC = (host: string) => {
       // in flight and calls connectToTRPC(), creating a second wsClient and a
       // second server context. The two contexts then race and the handshake
       // hash from one is validated against the other → FORBIDDEN.
-      if (wasReconnecting) stopReconnecting();
+      //
+      // We use cancelReconnectTimer() rather than stopReconnecting() here so
+      // the Redux "reconnecting" flag stays true while reauthCallback runs.
+      // stopReconnecting() (which clears the Redux flag) is called inside
+      // .then() immediately before setConnected(true), so both Redux dispatches
+      // land in the same React batch — eliminating the brief window where
+      // !connected && !reconnecting would flash the login screen.
+      if (wasReconnecting) cancelReconnectTimer();
 
       if (wasReconnecting && reauthCallback) {
         if (reauthInProgress) {
@@ -99,6 +106,9 @@ const initializeTRPC = (host: string) => {
         reauthInProgress = true;
         reauthCallback()
           .then(() => {
+            // Dispatch setReconnecting(false) and setConnected(true) together
+            // so React batches them into one render — no login-screen flash.
+            stopReconnecting();
             setConnected(true);
             setDisconnectInfo(undefined);
             startHeartbeat();

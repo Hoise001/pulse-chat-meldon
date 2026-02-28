@@ -158,7 +158,7 @@ const useVoiceControls = ({
 
         // handle native screen share end
         video.onended = async () => {
-          stopScreenShareStream();
+          await stopScreenShareStream();
           updateOwnVoiceState({ sharingScreen: false });
 
           await trpc.voice.updateState.mutate({
@@ -173,7 +173,7 @@ const useVoiceControls = ({
       playSound(SoundType.OWN_USER_STOPPED_SCREENSHARE);
 
       try {
-        stopScreenShareStream();
+        await stopScreenShareStream();
         await trpc.voice.updateState.mutate({
           sharingScreen: false
         });

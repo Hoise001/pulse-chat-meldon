@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import {
   joinFederatedServer,
   switchServer
@@ -31,6 +32,7 @@ const ServerCard = memo(
     onJoin: (serverId: number) => void;
     joining: boolean;
   }) => {
+    const { t } = useTranslation();
     const firstLetter = server.name.charAt(0).toUpperCase();
 
     return (
@@ -64,13 +66,13 @@ const ServerCard = memo(
           <div className="mt-auto flex items-center justify-between pt-2">
             <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
               <Users className="h-4 w-4" />
-              <span>{server.memberCount ?? 0} members</span>
+              <span>{t('discover.memberCount', { count: server.memberCount ?? 0 })}</span>
             </div>
 
             {server.joined ? (
               <span className="flex items-center gap-1.5 rounded-md bg-input px-4 py-1.5 text-sm font-medium text-muted-foreground">
                 <Check className="h-3.5 w-3.5" />
-                Joined
+                {t('discover.buttons.joined')}
               </span>
             ) : (
               <button
@@ -86,7 +88,7 @@ const ServerCard = memo(
                 {joining ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  'Join'
+                  t('discover.buttons.join')
                 )}
               </button>
             )}
@@ -109,6 +111,7 @@ const FederatedServerCard = memo(
     joining: boolean;
     joined: boolean;
   }) => {
+    const { t } = useTranslation();
     const firstLetter = server.name.charAt(0).toUpperCase();
 
     return (
@@ -147,13 +150,13 @@ const FederatedServerCard = memo(
           <div className="mt-auto flex items-center justify-between pt-2">
             <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
               <Users className="h-4 w-4" />
-              <span>{server.memberCount} members</span>
+              <span>{t('discover.memberCount', { count: server.memberCount })}</span>
             </div>
 
             {joined ? (
               <span className="flex items-center gap-1.5 rounded-md bg-input px-4 py-1.5 text-sm font-medium text-muted-foreground">
                 <Check className="h-3.5 w-3.5" />
-                Joined
+                {t('discover.buttons.joined')}
               </span>
             ) : (
               <button
@@ -169,7 +172,7 @@ const FederatedServerCard = memo(
                 {joining ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  'Join'
+                  t('discover.buttons.join')
                 )}
               </button>
             )}
@@ -181,6 +184,7 @@ const FederatedServerCard = memo(
 );
 
 const DiscoverView = memo(() => {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<'local' | 'federated'>('local');
   const [servers, setServers] = useState<TDiscoverServer[]>([]);
   const [loading, setLoading] = useState(true);
@@ -227,7 +231,7 @@ const DiscoverView = memo(() => {
         setServers(data);
       } catch (error) {
         console.error('Failed to fetch discoverable servers:', error);
-        toast.error('Failed to load servers');
+        toast.error(t('discover.toasts.failedLoad'));
       } finally {
         setLoading(false);
       }
@@ -277,10 +281,10 @@ const DiscoverView = memo(() => {
     let password: string | undefined;
     if (server.hasPassword) {
       const result = await requestTextInput({
-        title: 'Server Password',
-        message: `"${server.name}" requires a password to join.`,
+        title: t('discover.passwordDialog.title'),
+        message: t('discover.passwordDialog.message', { name: server.name }),
         type: 'password',
-        confirmLabel: 'Join'
+        confirmLabel: t('discover.passwordDialog.confirm')
       });
       if (!result) return;
       password = result;
@@ -306,15 +310,15 @@ const DiscoverView = memo(() => {
         await switchServer(summary.id, hash);
       }
 
-      toast.success(`Joined ${summary.name}`);
+      toast.success(t('discover.toasts.joined', { name: summary.name }));
     } catch (error: unknown) {
       console.error('Failed to join server:', error);
       const errMsg = error instanceof Error ? error.message : '';
       const msg = errMsg.includes('Invalid password')
-        ? 'Invalid password'
+        ? t('discover.toasts.invalidPassword')
         : errMsg.includes('Too many failed')
           ? errMsg
-          : 'Failed to join server';
+          : t('discover.toasts.failedJoin');
       toast.error(msg);
     } finally {
       setJoiningId(null);
@@ -327,10 +331,10 @@ const DiscoverView = memo(() => {
       let password: string | undefined;
       if (server.hasPassword) {
         const result = await requestTextInput({
-          title: 'Server Password',
-          message: `"${server.name}" on ${server.instanceDomain} requires a password to join.`,
+          title: t('discover.passwordDialog.title'),
+          message: t('discover.passwordDialog.message', { name: server.name }),
           type: 'password',
-          confirmLabel: 'Join'
+          confirmLabel: t('discover.passwordDialog.confirm')
         });
         if (!result) return;
         password = result;
@@ -369,10 +373,10 @@ const DiscoverView = memo(() => {
         console.error('[handleJoinFederated] error:', error);
         const errMsg = error instanceof Error ? error.message : '';
         const msg = errMsg.includes('Invalid password')
-          ? 'Invalid password'
+          ? t('discover.toasts.invalidPassword')
           : errMsg.includes('Too many failed')
             ? errMsg
-            : 'Failed to join federated server';
+            : t('discover.toasts.failedJoinFederated');
         toast.error(msg);
       } finally {
         setJoiningFedPublicId(null);
@@ -385,7 +389,7 @@ const DiscoverView = memo(() => {
     <div className="flex flex-1 min-h-0 flex-col overflow-hidden">
       <div className="flex h-12 items-center border-b border-border px-4 shadow-sm">
         <Compass className="mr-2 h-5 w-5 text-muted-foreground" />
-        <h2 className="font-semibold text-foreground">Discover Servers</h2>
+        <h2 className="font-semibold text-foreground">{t('discover.title')}</h2>
         <div className="ml-4 flex gap-1">
           <button
             onClick={() => {
@@ -399,7 +403,7 @@ const DiscoverView = memo(() => {
                 : 'text-muted-foreground hover:text-foreground'
             )}
           >
-            Local
+            {t('discover.tabs.local')}
           </button>
           <button
             onClick={() => {
@@ -414,7 +418,7 @@ const DiscoverView = memo(() => {
             )}
           >
             <Globe className="h-3.5 w-3.5" />
-            Federated
+            {t('discover.tabs.federated')}
           </button>
         </div>
         <div className="ml-auto">
@@ -422,7 +426,7 @@ const DiscoverView = memo(() => {
             <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <input
               type="text"
-              placeholder="Search servers..."
+              placeholder={t('discover.searchPlaceholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="h-8 w-48 rounded-md border border-border bg-background pl-8 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
@@ -441,16 +445,16 @@ const DiscoverView = memo(() => {
             ) : servers.length === 0 ? (
               <div className="flex h-full flex-col items-center justify-center gap-2 text-muted-foreground">
                 <Compass className="h-12 w-12" />
-                <p className="text-lg font-medium">No servers to discover</p>
+                <p className="text-lg font-medium">{t('discover.empty.noServers')}</p>
                 <p className="text-sm">
-                  Check back later or join a server with an invite link.
+                  {t('discover.empty.noServersSubtitle')}
                 </p>
               </div>
             ) : filteredServers.length === 0 ? (
               <div className="flex h-full flex-col items-center justify-center gap-2 text-muted-foreground">
                 <Search className="h-12 w-12" />
                 <p className="text-lg font-medium">
-                  No servers matching &apos;{searchQuery}&apos;
+                  {t('discover.empty.noSearchResults', { query: searchQuery })}
                 </p>
               </div>
             ) : (
@@ -478,19 +482,19 @@ const DiscoverView = memo(() => {
               <div className="flex h-full flex-col items-center justify-center gap-2 text-muted-foreground">
                 <Globe className="h-12 w-12" />
                 <p className="text-lg font-medium">
-                  No federated servers available
+                  {t('discover.empty.noFederated')}
                 </p>
                 <p className="text-sm">
                   {instances.length === 0
-                    ? 'No active federated instances. Ask your admin to set up federation.'
-                    : 'Connected instances have no federatable servers.'}
+                    ? t('discover.empty.noFederatedActive')
+                    : t('discover.empty.noFederatable')}
                 </p>
               </div>
             ) : filteredRemoteServers.length === 0 ? (
               <div className="flex h-full flex-col items-center justify-center gap-2 text-muted-foreground">
                 <Search className="h-12 w-12" />
                 <p className="text-lg font-medium">
-                  No servers matching &apos;{searchQuery}&apos;
+                  {t('discover.empty.noSearchResults', { query: searchQuery })}
                 </p>
               </div>
             ) : (

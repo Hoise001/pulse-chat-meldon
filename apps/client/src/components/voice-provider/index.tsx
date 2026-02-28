@@ -148,6 +148,11 @@ const VoiceProvider = memo(({ children }: TVoiceProviderProps) => {
   const micGainRef = useRef<GainNode | null>(null);
   const micMutedRef = useRef(false);
   const winProcessAudioStreamRef = useRef<WinProcessAudioStream | null>(null);
+  // Monotonically-increasing counter. Incremented every time a NEW screen-share
+  // session starts (or cleanup() runs). stopScreenShareStream captures its value
+  // before any await; if the value changes by the time the await resolves it
+  // means a new session started and the pending stop must not overwrite its state.
+  const screenShareSessionRef = useRef(0);
   const audioVideoRefsMap = useRef<Map<number, AudioVideoRefs>>(new Map());
   const { devices } = useDevices();
   const ownVoiceStateForRef = useSelector(ownVoiceStateSelector);
@@ -406,6 +411,9 @@ const startMicStream = useCallback(async () => {
 
   const stopScreenShareStream = useCallback(async () => {
     logVoice('Stopping screen share stream');
+    // Snapshot the current session so we can detect if startScreenShareStream
+    // (or cleanup) runs while we are suspended on a getUserMedia await below.
+    const mySession = screenShareSessionRef.current;
 
     localScreenShareStream?.getTracks().forEach((track) => {
       logVoice('Stopping screen share track', { track });
@@ -451,6 +459,13 @@ const startMicStream = useCallback(async () => {
         });
 
         const newMicTrack = newMicStream.getAudioTracks()[0];
+        // If a new screen-share session started while we were awaiting getUserMedia,
+        // discard this mic stream — it belongs to the old session.
+        if (screenShareSessionRef.current !== mySession) {
+          newMicStream.getTracks().forEach((t) => t.stop());
+          logVoice('stopScreenShareStream: new session started during getUserMedia, discarding stale mic stream');
+          return;
+        }
         if (newMicTrack && audioContextRef.current && micGainRef.current) {
           // Reconnect through the existing GainNode so the mute state (gain=0)
           // is preserved. The producer already holds dest.stream.getAudioTracks()[0];
@@ -460,11 +475,26 @@ const startMicStream = useCallback(async () => {
           micSourceRef.current.connect(micGainRef.current);
           localAudioStream?.getAudioTracks().forEach((t) => t.stop());
           setLocalAudioStream(newMicStream);
+          // Belt-and-suspenders: if startScreenShareStream fell back to replaceTrack
+          // (audio context wasn't ready at that point), re-anchor the producer to the
+          // gain node output so audio flows again.
+          const mixedTrack = destinationRef.current?.stream.getAudioTracks()[0];
+          if (mixedTrack && localAudioProducer.current && !localAudioProducer.current.closed) {
+            await localAudioProducer.current.replaceTrack({ track: mixedTrack });
+          }
           logVoice('Mic restored to original settings via audio graph (mute state preserved)');
         }
       } catch (err) {
         logVoice('Failed to restore mic settings', { error: err });
       }
+    }
+
+    // Final guard: bail if a new session started while the mic getUserMedia was
+    // pending (or if cleanup() ran). Without this the setters below would
+    // overwrite the newly-started stream's state with undefined/false.
+    if (screenShareSessionRef.current !== mySession) {
+      logVoice('stopScreenShareStream: session changed before final cleanup, skipping state reset');
+      return;
     }
 
     setLocalScreenShare(undefined);
@@ -475,6 +505,9 @@ const startMicStream = useCallback(async () => {
   const startScreenShareStream = useCallback(async () => {
     try {
       logVoice('Starting screen share stream');
+      // Invalidate any still-pending stopScreenShareStream async tail so it
+      // doesn't overwrite this session's state when its getUserMedia resolves.
+      screenShareSessionRef.current += 1;
 
       const stream = await navigator.mediaDevices.getDisplayMedia({
         video: {
@@ -674,9 +707,19 @@ const startMicStream = useCallback(async () => {
 
                           const newMicTrack = newMicStream.getAudioTracks()[0];
                           if (newMicTrack) {
-                            await localAudioProducer.current.replaceTrack({ track: newMicTrack });
-                            // Stop old tracks and update stream
-                            localAudioStream?.getAudioTracks().forEach((t) => t.stop());
+                            // Re-wire through the audio graph so the gain node (mute state) is
+                            // preserved and stopScreenShareStream can restore cleanly without a
+                            // replaceTrack call. The producer already points at destinationRef.stream.
+                            if (audioContextRef.current && micGainRef.current) {
+                              if (micSourceRef.current) micSourceRef.current.disconnect();
+                              localAudioStream?.getAudioTracks().forEach((t) => t.stop());
+                              micSourceRef.current = audioContextRef.current.createMediaStreamSource(newMicStream);
+                              micSourceRef.current.connect(micGainRef.current);
+                            } else {
+                              // Audio graph not initialised yet — fall back to direct replacement
+                              await localAudioProducer.current.replaceTrack({ track: newMicTrack });
+                              localAudioStream?.getAudioTracks().forEach((t) => t.stop());
+                            }
                             setLocalAudioStream(newMicStream);
                             logVoice('macOS: Mic re-acquired with echo cancellation enabled');
                           }
@@ -709,7 +752,7 @@ const startMicStream = useCallback(async () => {
           const pendingSourceId = await window.pulseDesktop.winProcessAudio?.getPendingSource?.() ?? null;
 
           if (pendingSourceId && window.pulseDesktop.winProcessAudio) {
-            // ── Process loopback path (window source, Win10 build 20348+) ────
+            // ── Process loopback path (window source, Win10 2004 / build 19041+) ────
             logVoice('Windows: Starting WASAPI process loopback', { sourceId: pendingSourceId });
             try {
               // start() waits until the first audio packet arrives and returns
@@ -772,8 +815,18 @@ const startMicStream = useCallback(async () => {
 
                 const newMicTrack = newMicStream.getAudioTracks()[0];
                 if (newMicTrack) {
-                  await localAudioProducer.current.replaceTrack({ track: newMicTrack });
-                  localAudioStream?.getAudioTracks().forEach((t) => t.stop());
+                  // Route through the audio graph to preserve mute state and ensure
+                  // stopScreenShareStream can restore cleanly — producer stays on destinationRef.
+                  if (audioContextRef.current && micGainRef.current) {
+                    if (micSourceRef.current) micSourceRef.current.disconnect();
+                    localAudioStream?.getAudioTracks().forEach((t) => t.stop());
+                    micSourceRef.current = audioContextRef.current.createMediaStreamSource(newMicStream);
+                    micSourceRef.current.connect(micGainRef.current);
+                  } else {
+                    // Audio graph not initialised yet — fall back to direct replacement
+                    await localAudioProducer.current.replaceTrack({ track: newMicTrack });
+                    localAudioStream?.getAudioTracks().forEach((t) => t.stop());
+                  }
                   setLocalAudioStream(newMicStream);
                   logVoice('Windows: Mic re-acquired with echo cancellation');
                 }
@@ -914,6 +967,9 @@ const startMicStream = useCallback(async () => {
 
   const cleanup = useCallback(() => {
     logVoice('Running voice provider cleanup');
+    // Invalidate any in-flight stopScreenShareStream so its async tail doesn't
+    // fire setLocalScreenShare/setSharingSystemAudio into the next session.
+    screenShareSessionRef.current += 1;
 
     // Fully tear down the Web Audio graph so startMicStream always rebuilds
     // it fresh on on rejoin. Without this the AudioContext may be suspended
